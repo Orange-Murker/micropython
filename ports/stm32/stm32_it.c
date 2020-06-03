@@ -83,7 +83,7 @@
 #include "i2c.h"
 #include "usb.h"
 
-extern void __fatal_error(const char *);
+extern void __fatal_error(const char*);
 #if defined(MICROPY_HW_USB_FS)
 extern PCD_HandleTypeDef pcd_fs_handle;
 #endif
@@ -107,9 +107,9 @@ STATIC char *fmt_hex(uint32_t val, char *buf) {
     buf[2] = hexDig[(val >> 20) & 0x0f];
     buf[3] = hexDig[(val >> 16) & 0x0f];
     buf[4] = hexDig[(val >> 12) & 0x0f];
-    buf[5] = hexDig[(val >> 8) & 0x0f];
-    buf[6] = hexDig[(val >> 4) & 0x0f];
-    buf[7] = hexDig[(val >> 0) & 0x0f];
+    buf[5] = hexDig[(val >>  8) & 0x0f];
+    buf[6] = hexDig[(val >>  4) & 0x0f];
+    buf[7] = hexDig[(val >>  0) & 0x0f];
     buf[8] = '\0';
 
     return buf;
@@ -137,7 +137,7 @@ STATIC void print_hex_hex(const char *label, uint32_t val1, uint32_t val2) {
 // // stack: R0, R1, R2, R3, R12, LR, PC, XPSR
 
 typedef struct {
-    uint32_t r0, r1, r2, r3, r12, lr, pc, xpsr;
+    uint32_t    r0, r1, r2, r3, r12, lr, pc, xpsr;
 } ExceptionRegisters_t;
 
 int pyb_hard_fault_debug = 0;
@@ -178,14 +178,14 @@ void HardFault_C_Handler(ExceptionRegisters_t *regs) {
     }
     #endif
 
-    if ((void *)&_ram_start <= (void *)regs && (void *)regs < (void *)&_ram_end) {
+    if ((void*)&_ram_start <= (void*)regs && (void*)regs < (void*)&_ram_end) {
         mp_hal_stdout_tx_str("Stack:\r\n");
         uint32_t *stack_top = &_estack;
-        if ((void *)regs < (void *)&_sstack) {
+        if ((void*)regs < (void*)&_sstack) {
             // stack not in static stack area so limit the amount we print
-            stack_top = (uint32_t *)regs + 32;
+            stack_top = (uint32_t*)regs + 32;
         }
-        for (uint32_t *sp = (uint32_t *)regs; sp < stack_top; ++sp) {
+        for (uint32_t *sp = (uint32_t*)regs; sp < stack_top; ++sp) {
             print_hex_hex("  ", (uint32_t)sp, *sp);
         }
     }
@@ -210,23 +210,23 @@ void HardFault_Handler(void) {
     // was stacked up using the process stack pointer (aka PSP).
 
     #if __CORTEX_M == 0
-    __asm volatile (
-        " mov r0, lr    \n"
-        " lsr r0, r0, #3 \n"    // Shift Bit 3 into carry to see which stack pointer we should use.
-        " mrs r0, msp   \n"     // Make R0 point to main stack pointer
-        " bcc .use_msp  \n"     // Keep MSP in R0 if SPSEL (carry) is 0
-        " mrs r0, psp   \n"     // Make R0 point to process stack pointer
-        " .use_msp:     \n"
-        " b HardFault_C_Handler \n" // Off to C land
-        );
+    __asm volatile(
+    " mov r0, lr    \n"
+    " lsr r0, r0, #3 \n"        // Shift Bit 3 into carry to see which stack pointer we should use.
+    " mrs r0, msp   \n"         // Make R0 point to main stack pointer
+    " bcc .use_msp  \n"         // Keep MSP in R0 if SPSEL (carry) is 0
+    " mrs r0, psp   \n"         // Make R0 point to process stack pointer
+    " .use_msp:     \n"
+    " b HardFault_C_Handler \n" // Off to C land
+    );
     #else
-    __asm volatile (
-        " tst lr, #4    \n"     // Test Bit 3 to see which stack pointer we should use.
-        " ite eq        \n"     // Tell the assembler that the nest 2 instructions are if-then-else
-        " mrseq r0, msp \n"     // Make R0 point to main stack pointer
-        " mrsne r0, psp \n"     // Make R0 point to process stack pointer
-        " b HardFault_C_Handler \n" // Off to C land
-        );
+    __asm volatile(
+    " tst lr, #4    \n"         // Test Bit 3 to see which stack pointer we should use.
+    " ite eq        \n"         // Tell the assembler that the nest 2 instructions are if-then-else
+    " mrseq r0, msp \n"         // Make R0 point to main stack pointer
+    " mrsne r0, psp \n"         // Make R0 point to process stack pointer
+    " b HardFault_C_Handler \n" // Off to C land
+    );
     #endif
 }
 
@@ -343,43 +343,43 @@ void OTG_HS_IRQHandler(void) {
   */
 STATIC void OTG_CMD_WKUP_Handler(PCD_HandleTypeDef *pcd_handle) {
 
-    if (pcd_handle->Init.low_power_enable) {
-        /* Reset SLEEPDEEP bit of Cortex System Control Register */
-        SCB->SCR &= (uint32_t) ~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
+  if (pcd_handle->Init.low_power_enable) {
+    /* Reset SLEEPDEEP bit of Cortex System Control Register */
+    SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
 
-        /* Configures system clock after wake-up from STOP: enable HSE/HSI, PLL and select
-        PLL as system clock source (HSE/HSI and PLL are disabled in STOP mode) */
+    /* Configures system clock after wake-up from STOP: enable HSE/HSI, PLL and select
+    PLL as system clock source (HSE/HSI and PLL are disabled in STOP mode) */
 
-        __HAL_RCC_HSE_CONFIG(MICROPY_HW_RCC_HSE_STATE);
-        #if MICROPY_HW_CLK_USE_HSI
-        __HAL_RCC_HSI_ENABLE();
-        #endif
+    __HAL_RCC_HSE_CONFIG(MICROPY_HW_RCC_HSE_STATE);
+    #if MICROPY_HW_CLK_USE_HSI
+    __HAL_RCC_HSI_ENABLE();
+    #endif
 
-        /* Wait till HSE/HSI is ready */
-        while (__HAL_RCC_GET_FLAG(MICROPY_HW_RCC_FLAG_HSxRDY) == RESET) {
-        }
+    /* Wait till HSE/HSI is ready */
+    while(__HAL_RCC_GET_FLAG(MICROPY_HW_RCC_FLAG_HSxRDY) == RESET)
+    {}
 
-        /* Enable the main PLL. */
-        __HAL_RCC_PLL_ENABLE();
+    /* Enable the main PLL. */
+    __HAL_RCC_PLL_ENABLE();
 
-        /* Wait till PLL is ready */
-        while (__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET) {
-        }
+    /* Wait till PLL is ready */
+    while(__HAL_RCC_GET_FLAG(RCC_FLAG_PLLRDY) == RESET)
+    {}
 
-        /* Select PLL as SYSCLK */
-        MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, RCC_SYSCLKSOURCE_PLLCLK);
+    /* Select PLL as SYSCLK */
+    MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, RCC_SYSCLKSOURCE_PLLCLK);
 
-        #if defined(STM32H7)
-        while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_CFGR_SWS_PLL1) {
-        }
-        #else
-        while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_CFGR_SWS_PLL) {
-        }
-        #endif
+    #if defined(STM32H7)
+    while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_CFGR_SWS_PLL1)
+    {}
+    #else
+    while (__HAL_RCC_GET_SYSCLK_SOURCE() != RCC_CFGR_SWS_PLL)
+    {}
+    #endif
 
-        /* ungate PHY clock */
-        __HAL_PCD_UNGATE_PHYCLOCK(pcd_handle);
-    }
+    /* ungate PHY clock */
+     __HAL_PCD_UNGATE_PHYCLOCK(pcd_handle);
+  }
 
 }
 #endif
@@ -393,12 +393,12 @@ STATIC void OTG_CMD_WKUP_Handler(PCD_HandleTypeDef *pcd_handle) {
 void OTG_FS_WKUP_IRQHandler(void) {
     IRQ_ENTER(OTG_FS_WKUP_IRQn);
 
-    OTG_CMD_WKUP_Handler(&pcd_fs_handle);
+  OTG_CMD_WKUP_Handler(&pcd_fs_handle);
 
-    #if !defined(STM32H7)
-    /* Clear EXTI pending Bit*/
-    __HAL_USB_FS_EXTI_CLEAR_FLAG();
-    #endif
+  #if !defined(STM32H7)
+  /* Clear EXTI pending Bit*/
+  __HAL_USB_FS_EXTI_CLEAR_FLAG();
+  #endif
 
     IRQ_EXIT(OTG_FS_WKUP_IRQn);
 }
@@ -413,12 +413,12 @@ void OTG_FS_WKUP_IRQHandler(void) {
 void OTG_HS_WKUP_IRQHandler(void) {
     IRQ_ENTER(OTG_HS_WKUP_IRQn);
 
-    OTG_CMD_WKUP_Handler(&pcd_hs_handle);
+  OTG_CMD_WKUP_Handler(&pcd_hs_handle);
 
-    #if !defined(STM32H7)
-    /* Clear EXTI pending Bit*/
-    __HAL_USB_HS_EXTI_CLEAR_FLAG();
-    #endif
+  #if !defined(STM32H7)
+  /* Clear EXTI pending Bit*/
+  __HAL_USB_HS_EXTI_CLEAR_FLAG();
+  #endif
 
     IRQ_EXIT(OTG_HS_WKUP_IRQn);
 }
@@ -512,7 +512,7 @@ void RTC_Alarm_IRQHandler(void) {
 }
 
 #if defined(ETH)    // The 407 has ETH, the 405 doesn't
-void ETH_WKUP_IRQHandler(void) {
+void ETH_WKUP_IRQHandler(void)  {
     IRQ_ENTER(ETH_WKUP_IRQn);
     Handle_EXTI_Irq(EXTI_ETH_WAKEUP);
     IRQ_EXIT(ETH_WKUP_IRQn);
@@ -774,7 +774,44 @@ void USART4_5_IRQHandler(void) {
 
 void USART3_IRQHandler(void) {
     IRQ_ENTER(USART3_IRQn);
-    uart_irq_handler(3);
+
+    // UART3 registers
+    // Increment of 1 to such an adress means four bytes/32 bits since stm32 is directly 32 bits addressable only
+    #define REG_CR1 ((volatile unsigned int *) 0x40004800)
+    #define REG_ICR ((volatile unsigned int *) 0x40004820)
+    #define REG_TDR ((volatile unsigned int *) 0x40004828)
+
+    // Exchange adress and buffer length in doublewords
+    #define REG ((volatile unsigned int *) 0x30040000)
+    #define REG_L 16
+
+    // However we got here, disable the TXE IRQ and clear both TXE and TC flags 
+    *REG_CR1 &= ~(0x1 << 0x7);
+    *REG_ICR |= 0x1 << 0x7;
+    *REG_ICR |= 0x1 << 0x6;
+    
+    //  Read c and n
+    uint8_t c = *REG;
+    uint8_t n = *(REG + 1);
+
+    // If there is data to send still
+    if (c != n){
+        // Split into bitshifting, since only 32bit adressable but 8bit TDR
+        uint8_t c_4 = c / 4;
+        uint8_t c_r = c % 4;
+
+        // Copy byte to the TX register
+        *REG_TDR = *(REG + 2 + c_4) >> (8 * c_r);
+
+        // Increment c
+        *REG = (*REG + 1) % (4 * REG_L);
+
+    } else {
+        // If up to date, remove TC IRQ
+        *REG_CR1 &= ~(0x1 << 0x6);
+    }
+    
+    // uart_irq_handler(3);
     IRQ_EXIT(USART3_IRQn);
 }
 

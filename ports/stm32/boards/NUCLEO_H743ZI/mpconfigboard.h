@@ -46,7 +46,7 @@ void NUCLEO_H743ZI_board_early_init(void);
 #define MICROPY_HW_UART8_TX         (pin_E1)
 #define MICROPY_HW_UART8_RX         (pin_E0)
 
-#define MICROPY_HW_UART_REPL        PYB_UART_3
+// #define MICROPY_HW_UART_REPL        PYB_UART_3
 #define MICROPY_HW_UART_REPL_BAUD   115200
 
 // I2C busses
