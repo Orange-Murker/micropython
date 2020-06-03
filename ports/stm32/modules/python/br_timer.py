@@ -5,10 +5,8 @@
 # - Other timer related functions
 
 # Imports
-import pyb, micropython, gc, utime
+import pyb, micropython, gc, utime, stm, machine
 
-# set mem for inerrupting error messages
-micropython.alloc_emergency_exception_buf(100)
 
 # Time measurement function similar to Matlab's tic/toc
 # tic();toc() itself takes 6us, excluding the print statements
@@ -20,6 +18,30 @@ def tic():
 def toc():
     t1 = utime.ticks_us()
     print('Time elapsed [us]: ', '{:,}'.format(t1 - t0))
+
+
+
+# Example of non-blocking quadrature encoder implementation based on harware timers
+p1 = machine.Pin('E9', machine.Pin.AF1_TIM1)
+p2 = machine.Pin('E11', machine.Pin.AF1_TIM1)
+
+timer = pyb.Timer(1, prescaler=0, period=10)
+
+ch2 = timer.channel(2, pyb.Timer.ENC_AB, pin=p2)
+ch1 = timer.channel(1, pyb.Timer.ENC_AB, pin=p1)
+
+timer.counter()
+
+d1=machine.Pin('C0',machine.Pin.OUT_PP)
+d2=machine.Pin('C3',machine.Pin.OUT_PP)
+
+d1.value(not d1.value());timer.counter()
+d2.value(not d2.value());timer.counter()    
+
+
+
+# Set mem for error messages while in ISR's
+micropython.alloc_emergency_exception_buf(100)
 
 # Class that takes care of callback/schedule linking and gc.collect()
 class ticker:
