@@ -3,14 +3,28 @@
 #include "py/runtime.h"
 #include "py/builtin.h"
 
+// Endianness swap of integers
+#define SWAP(n) ((unsigned long) (((n & 0xFF) << 24) | \
+                                          ((n & 0xFF00) << 8) | \
+                                          ((n & 0xFF0000) >> 8) | \
+                                          ((n & 0xFF000000) >> 24)))
+
 // This is the function which will be called from Python as bruart.add_ints(a, b).
 STATIC mp_obj_t send(mp_obj_t in_obj) {
-    // Union to interpret incoming ints or floats as floats
+    // Union to save data and send raw as un.u
     union {
         float f;
         unsigned int u;
-    } un;
-    un.f = mp_obj_get_float(in_obj);
+    } un = {.u = 0};
+
+    // Get type
+    if mp_obj_is_int(in_obj){
+        un.u = SWAP(mp_obj_get_int(in_obj));
+    } else if mp_obj_is_float(in_obj){
+        un.f = mp_obj_get_float(in_obj);
+    } else {
+        mp_raise_TypeError("Not an integer or float");
+    }
     
     // UART3 registers
     // Increment of 1 to such an adress means four bytes/32 bits since stm32 is directly 32 bits addressable only
