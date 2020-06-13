@@ -40,7 +40,12 @@ __pycache__/
 GNUmakefile
 user.props
 .directory
+.idea/
 
 # Generated rst files
 ######################
 genrst/
+
+# Environments
+######################
+venv/
