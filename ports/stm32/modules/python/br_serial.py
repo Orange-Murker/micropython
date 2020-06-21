@@ -22,11 +22,11 @@ machine.mem8[stm.USART3+stm.USART_CR1] &= ~(1 << 5)
 # machine.mem32[REG+0]=0 # c
 # machine.mem32[REG+4]=0 # n
 
-class serial:
+class serial_pc:
 
     def __init__(self, nch):
         self.nch = nch
-        self.data = nch*[0]
+        self.data = nch*[float('nan')]
         self.time = []
 
     def set(self, ch, word):
@@ -45,4 +45,7 @@ class serial:
         # Data
         for word in self.data:
             uart3br.send(word) 
+        
+        # Reset data to nan's, such that sending data is explicit
+        self.data = self.nch*[float('nan')]
     
