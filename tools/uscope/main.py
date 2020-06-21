@@ -2,7 +2,14 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSlot, QIODevice
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
+from PyQt5.QtSerialPort import QSerialPort
+import pyqtgraph as pg
+import numpy as np
+
+
+# Basic PyQtGraph settings
+pg.setConfigOption('background', 'w')
+pg.setConfigOption('foreground', 'k')
 
 
 class MainWindow(QMainWindow):
@@ -33,7 +40,11 @@ class MainWindow(QMainWindow):
         layout_main.addLayout(layout_top)
 
         # Plots
-        self.plot = QPushButton("Plot window")
+        self.plot = pg.PlotWidget()
+        self.plot.showGrid(True, True)
+
+        self.p1 = self.plot.getPlotItem()
+
         self.console = QTextEdit(readOnly=True)
 
         layout_main.addWidget(self.plot)
@@ -51,6 +62,8 @@ class MainWindow(QMainWindow):
 
         # Initialize serial
         self.serial = self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
+
+        self.data = np.array([], dtype='float64')
 
     @pyqtSlot(bool)
     def on_connect_toggle(self, checked):
@@ -81,7 +94,13 @@ class MainWindow(QMainWindow):
             except UnicodeDecodeError:
                 text = ""
             text = text.rstrip('\n').rstrip('\r')
-            self.console.append(text)
+
+            val = np.array([float(text)], dtype='float64')
+
+            self.data = np.append(self.data, val)
+
+            #self.p1.setData(self.data)
+            self.plot.plot(self.data)
 
 
 # Run window when file was called as executable
