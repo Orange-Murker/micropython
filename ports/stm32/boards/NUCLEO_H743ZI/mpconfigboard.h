@@ -71,7 +71,7 @@ void NUCLEO_H743ZI_board_early_init(void);
 
 // LEDs
 #define MICROPY_HW_LED1             (pin_B0)    // green
-#define MICROPY_HW_LED2             (pin_B7)    // blue
+#define MICROPY_HW_LED2             (pin_E1)    // orange
 #define MICROPY_HW_LED3             (pin_B14)   // red
 #define MICROPY_HW_LED_ON(pin)      (mp_hal_pin_high(pin))
 #define MICROPY_HW_LED_OFF(pin)     (mp_hal_pin_low(pin))
