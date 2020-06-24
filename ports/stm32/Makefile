@@ -1,6 +1,11 @@
 # Select the board to build for: if not given on the command line,
 # then default to PYBV10.
-BOARD ?= PYBV10
+BOARD ?= NUCLEO_H743ZI
+# Add biorobotics C modules in /modules/C/ 
+# And enable the extra flag or something?
+USER_C_MODULES=modules/C
+CFLAGS_EXTRA=-DMODULE_UART3BR_ENABLED=1
+# all
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
