@@ -21,9 +21,9 @@ STATIC mp_obj_t send(mp_obj_t in_obj) {
     if mp_obj_is_int(in_obj){
         un.u = SWAP(mp_obj_get_int(in_obj));
     } else if mp_obj_is_float(in_obj){
-        un.f = mp_obj_get_float(in_obj);
+        un.f = (float)mp_obj_get_float(in_obj);
     } else {
-        mp_raise_TypeError("Not an integer or float");
+        mp_raise_TypeError(MP_ERROR_TEXT("Not an integer or float"));
     }
     
     // UART3 registers
