@@ -6,6 +6,7 @@ from PyQt5.QtSerialPort import QSerialPort
 import pyqtgraph as pg
 import numpy as np
 
+from plot_decoder import PlotDecoder
 
 # Basic PyQtGraph settings
 pg.setConfigOption('background', 'w')
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow):
         # Port control
         layout_port = QFormLayout()
         self.input_port = QLineEdit()
-        self.input_port.setText("COM5")
+        self.input_port.setText("COM3")
         layout_port.addRow(QLabel("Serial port:"), self.input_port)
         self.button_port = QPushButton(
             "Connect",
@@ -62,8 +63,13 @@ class MainWindow(QMainWindow):
 
         # Initialize serial
         self.serial = self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
+        self.decoder = PlotDecoder()
 
-        self.data = np.array([], dtype='float64')
+        # Prepare data structure
+        self.channels = 0  # Wait for serial data, resize on the fly
+        self.data = None
+
+        self.set_channels(self.channels)
 
     @pyqtSlot(bool)
     def on_connect_toggle(self, checked):
@@ -86,21 +92,28 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_serial_receive(self):
-        """"Callback for serial data"""
+        """"Callback for serial data, already triggered by data"""
 
-        while self.serial.canReadLine():
-            try:
-                text = self.serial.readLine().data().decode()
-            except UnicodeDecodeError:
-                text = ""
-            text = text.rstrip('\n').rstrip('\r')
+        byte = self.serial.read(1)
+        if self.decoder.receive(byte):
+            self.update_data(self.decoder.channel_size, self.decoder.time, self.decoder.data)
 
-            val = np.array([float(text)], dtype='float64')
+    def update_data(self, channels, time, new_data):
+        """Called when new row was received"""
 
-            self.data = np.append(self.data, val)
+        if self.channels != channels:
+            self.set_channels(channels)
 
-            #self.p1.setData(self.data)
-            self.plot.plot(self.data)
+        col = np.array(new_data, dtype=float)
+
+        self.data = np.concatenate((self.data, col))
+
+        print(self.data)
+
+    def set_channels(self, channels):
+        """Resize number of channels"""
+
+        self.data = np.ndarray([channels, 1], dtype=float)
 
 
 # Run window when file was called as executable
