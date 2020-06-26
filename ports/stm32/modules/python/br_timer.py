@@ -21,22 +21,22 @@ def toc():
 
 
 
-# Example of non-blocking quadrature encoder implementation based on harware timers
-p1 = machine.Pin('E9', machine.Pin.AF1_TIM1)
-p2 = machine.Pin('E11', machine.Pin.AF1_TIM1)
+# # Example of non-blocking quadrature encoder implementation based on harware timers
+# p1 = machine.Pin('E9', machine.Pin.AF1_TIM1)
+# p2 = machine.Pin('E11', machine.Pin.AF1_TIM1)
 
-timer = pyb.Timer(1, prescaler=0, period=10)
+# timer = pyb.Timer(1, prescaler=0, period=10)
 
-ch2 = timer.channel(2, pyb.Timer.ENC_AB, pin=p2)
-ch1 = timer.channel(1, pyb.Timer.ENC_AB, pin=p1)
+# ch2 = timer.channel(2, pyb.Timer.ENC_AB, pin=p2)
+# ch1 = timer.channel(1, pyb.Timer.ENC_AB, pin=p1)
 
-timer.counter()
+# timer.counter()
 
-d1=machine.Pin('C0',machine.Pin.OUT_PP)
-d2=machine.Pin('C3',machine.Pin.OUT_PP)
+# d1=machine.Pin('C0',machine.Pin.OUT_PP)
+# d2=machine.Pin('C3',machine.Pin.OUT_PP)
 
-d1.value(not d1.value());timer.counter()
-d2.value(not d2.value());timer.counter()    
+# d1.value(not d1.value());timer.counter()
+# d2.value(not d2.value());timer.counter()    
 
 
 
