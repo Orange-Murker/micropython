@@ -7,8 +7,8 @@ pipelines:
   default:
     - step:
         caches:
-          - mpy-build
-          - stm-build
+          - mpybuild
+          - stmbuild
         script:
           - TAG=$()
           - apt update
@@ -20,7 +20,8 @@ pipelines:
           - make BOARD=NUCLEO_H743ZI
           - cd build-NUCLEO_H743ZI
           - ARCHIVE="micropython-development_stm32H743.zip"
-          - echo "This is a development version and was not properly tested! Commit: $BITBUCKET_COMMIT " > README.txt
+          - echo "This is a development version and was not properly tested! Commit:" > README.txt
+          - echo $BITBUCKET_COMMIT >> README.txt
           - zip $ARCHIVE firmware.hex firmware.elf firmware.dfu README.txt
           - pipe: atlassian/bitbucket-upload-file:0.1.8
             variables:
@@ -32,5 +33,5 @@ pipelines:
 
 definitions:
   caches:
-    mpy-build: mpy-cross\build
-    stm-build: ports\stm32\build-NUCLEO_H743ZI
+    mpybuild: mpy-cross/build
+    stmbuild: ports/stm32/build-NUCLEO_H743ZI
