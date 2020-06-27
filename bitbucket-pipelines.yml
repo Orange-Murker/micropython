@@ -22,6 +22,8 @@ pipelines:
               BITBUCKET_USERNAME: $BITBUCKET_USERNAME
               BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
               FILENAME: "build-NUCLEO_H743ZI/firmware.hex"
+              ACCOUNT: 'ctw-bw'
+              REPOSITORY: 'micropython'
 
 definitions:
   caches:
