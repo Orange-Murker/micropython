@@ -6,6 +6,9 @@ image: stronglytyped/arm-none-eabi-gcc
 pipelines:
   default:
     - step:
+        caches:
+          - mpy-build
+          - stm-build
         script:
           - apt update
           - apt install libffi-dev pkg-config python3 curl -y
@@ -14,8 +17,13 @@ pipelines:
           - cd ../ports/stm32
           - make submodules
           - make BOARD=NUCLEO_H743ZI
-          - pipe: atlassian/bitbucket-upload-file:0.1.2
+          - pipe: atlassian/bitbucket-upload-file:0.1.8
             variables:
               BITBUCKET_USERNAME: $BITBUCKET_USERNAME
               BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
               FILENAME: "build-NUCLEO_H743ZI/firmware.hex"
+
+definitions:
+  caches:
+    mpy-build: mpy-cross\build
+    stm-build: ports\stm32\build-NUCLEO_H743ZI
