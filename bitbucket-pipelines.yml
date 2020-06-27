@@ -10,6 +10,7 @@ pipelines:
           - mpy-build
           - stm-build
         script:
+          - TAG=$()
           - apt update
           - apt install libffi-dev pkg-config python3 zip unzip -y
           - cd mpy-cross
@@ -18,7 +19,7 @@ pipelines:
           - make submodules
           - make BOARD=NUCLEO_H743ZI
           - cd build-NUCLEO_H743ZI
-          - ARCHIVE="micropython_$(git describe --abbrev=0)-development_stm32H743.zip"
+          - ARCHIVE="micropython-development_stm32H743.zip"
           - zip $ARCHIVE firmware.hex firmware.elf firmware.dfu
           - pipe: atlassian/bitbucket-upload-file:0.1.8
             variables:
