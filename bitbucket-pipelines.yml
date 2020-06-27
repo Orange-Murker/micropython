@@ -14,4 +14,8 @@ pipelines:
           - cd ../ports/stm32
           - make submodules
           - make BOARD=NUCLEO_H743ZI
-          - curl -X POST --user "${BB_AUTH_STRING}" "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" --form files=@"build-NUCLEO_H743ZI/firmware.hex"
+          - pipe: atlassian/bitbucket-upload-file:0.1.2
+            variables:
+              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+              FILENAME: "build-NUCLEO_H743ZI/firmware.hex"
