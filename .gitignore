@@ -24,6 +24,7 @@
 ######################
 build/
 build-*/
+/tools/*/dist/
 
 # Test failure outputs
 ######################

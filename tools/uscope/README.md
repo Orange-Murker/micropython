@@ -22,3 +22,7 @@ You can also easily set up an IDE like Pycharm to use this virtual environment.
 
 This virtual environment allows you to install packages and change settings without affecting your
 global installation.
+
+## Executable
+
+Generate an executable by running `pyinstaller main.spec` from inside the virtual environment. The `main.spec` file is used for configuration. The executable can be found in `dist/*`.

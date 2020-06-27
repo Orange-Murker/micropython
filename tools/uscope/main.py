@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QIntValidator, QIcon
 from PyQt5.QtCore import pyqtSlot, QIODevice
 from PyQt5.QtSerialPort import QSerialPort
 import pyqtgraph as pg
@@ -226,5 +226,6 @@ if __name__ == '__main__':
 
     app = QApplication([])
     app.setStyle('Fusion')
+    app.setWindowIcon(QIcon('logo.ico'))
     window = MainWindow()
     sys.exit(app.exec())
