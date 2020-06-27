@@ -11,17 +11,20 @@ pipelines:
           - stm-build
         script:
           - apt update
-          - apt install libffi-dev pkg-config python3 curl -y
+          - apt install libffi-dev pkg-config python3 zip unzip -y
           - cd mpy-cross
           - make
           - cd ../ports/stm32
           - make submodules
           - make BOARD=NUCLEO_H743ZI
+          - cd build-NUCLEO_H743ZI
+          - ARCHIVE="micropython_$(git describe --abbrev=0)-development_stm32H743.zip"
+          - zip $ARCHIVE firmware.hex firmware.elf firmware.dfu
           - pipe: atlassian/bitbucket-upload-file:0.1.8
             variables:
               BITBUCKET_USERNAME: $BITBUCKET_USERNAME
               BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-              FILENAME: "build-NUCLEO_H743ZI/firmware.hex"
+              FILENAME: "$ARCHIVE"
               ACCOUNT: 'ctw-bw'
               REPOSITORY: 'micropython'
 
