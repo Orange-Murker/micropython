@@ -43,7 +43,7 @@ class PlotDecoder:
         if new_mode == Mode.DATA:
             self.data = []
 
-    def receive(self, byte):
+    def receive_byte(self, byte):
         """
         Precess new incoming byte
 
@@ -73,7 +73,9 @@ class PlotDecoder:
             self.buffer.append(byte[0])
 
             if len(self.buffer) == 4:
-                self.time = int.from_bytes(self.buffer, byteorder='big', signed=False)
+                # print(''.join('{:02x}'.format(x) for x in self.buffer))
+
+                self.time = int.from_bytes(self.buffer, byteorder='big', signed=True)
                 self.set_state(Mode.DATA)
 
             return False

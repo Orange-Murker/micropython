@@ -38,7 +38,7 @@ class MainWindow(QMainWindow):
         # Data size
         self.input_size = QLineEdit()
         self.input_size.setValidator(QIntValidator())
-        self.input_size.setText("500")
+        self.input_size.setText("200")
         layout_port.addRow(QLabel("Samples:"), self.input_size)
 
         # Overlay
@@ -110,15 +110,23 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def on_serial_receive(self):
-        """"Callback for serial data, already triggered by data"""
+        """"
+        Callback for serial data, already triggered by data
 
-        byte = self.serial.read(1)
-        if self.decoder.receive(byte):
-            self.update_data(self.decoder.channel_size, self.decoder.time, self.decoder.data)
+        It's important all available bytes are consumed, because this call-back cannot keep up with incoming streams
+        at real-time!
+        """
+
+        new_bytes = self.serial.readAll()
+
+        for byte in new_bytes:
+            if self.decoder.receive_byte(byte):
+                self.update_data(self.decoder.channel_size, self.decoder.time, self.decoder.data)
 
     def start_recording(self):
         """Called when recording should start (e.g. when `connect` was hit)"""
         self.channels = 0  # Force an update on the next data point
+        self.data_points = 0
         self.data_size = int(self.input_size.text())
         self.overlay = self.input_overlay.isChecked()
 

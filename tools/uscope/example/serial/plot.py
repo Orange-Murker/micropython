@@ -6,7 +6,7 @@ import math
 
 s = serial.Serial(port='COM3', baudrate=115200)
 
-plot = 0
+plot = False
 
 if not plot:
     while True:
@@ -54,15 +54,15 @@ while True:
         ax1.set_ylim(1.1 * i for i in [min(m1), max(m1)])
         ax1.set_xlim([min(t), max(t)])
 
-    if data == 2.0:
-        data = struct.unpack('f', s.read(4))[0]
-
-        m2.append(data)
-        m2.pop(0)
-        line2.set_ydata(m2)
-        line2.set_xdata(t)
-        ax2.set_ylim(1.1 * i for i in [min(m2), max(m2)])
-        ax2.set_xlim([min(t), max(t)])
+    # if data == 2.0:
+    #     data = struct.unpack('f', s.read(4))[0]
+    #
+    #     m2.append(data)
+    #     m2.pop(0)
+    #     line2.set_ydata(m2)
+    #     line2.set_xdata(t)
+    #     ax2.set_ylim(1.1 * i for i in [min(m2), max(m2)])
+    #     ax2.set_xlim([min(t), max(t)])
 
     # print(rx.hex(), struct.unpack('f', rx)[0])
 
