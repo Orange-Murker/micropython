@@ -24,6 +24,8 @@
 ######################
 build/
 build-*/
+/tools/*/dist/
+/tools/*/settings.json
 
 # Test failure outputs
 ######################
@@ -40,7 +42,12 @@ __pycache__/
 GNUmakefile
 user.props
 .directory
+.idea/
 
 # Generated rst files
 ######################
 genrst/
+
+# Environments
+######################
+venv/
