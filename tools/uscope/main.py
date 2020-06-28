@@ -71,6 +71,19 @@ class MainWindow(QMainWindow):
 
         layout_main.addLayout(layout_bottom)
 
+        # Buttons
+        layout_buttons = QHBoxLayout()
+        menu_save = QMenu()
+        menu_save.addAction("Numpy")
+        menu_save.addAction("CSV")
+        self.button_save = QPushButton(
+            "Save"
+        )
+        menu_save.triggered.connect(self.on_save)
+        self.button_save.setMenu(menu_save)
+        layout_buttons.addWidget(self.button_save)
+        layout_main.addLayout(layout_buttons)
+
         # Main window widget
         widget = QWidget()
         widget.setLayout(layout_main)
@@ -136,6 +149,37 @@ class MainWindow(QMainWindow):
             if self.decoder.receive_byte(byte):
                 self.update_data(self.decoder.channel_size, self.decoder.time, self.decoder.data)
 
+    @pyqtSlot(QAction)
+    def on_save(self, action):
+        self.save_data(action.text())
+
+    def save_data(self, format):
+        """Save data, format is either `csv` or `np`"""
+
+        if np.size(self.data, 0) < 3:
+            QMessageBox.information(self, 'Saving data', 'No data recorded yet', QMessageBox.Ok)
+            return
+
+        if format == "Numpy":
+            ext = "Numpy Data (*.npz)"
+        else:
+            ext = "Comma Separated Values (*.csv)"
+
+        options = QFileDialog.Options()
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "QFileDialog.getSaveFileName()", "", ext, options=options)
+
+        if filename:
+            if format == "Numpy":
+                np.savez(filename, data=self.data, time=self.time)
+            else:
+                data = np.vstack((self.time, self.data))
+                header = "time [s]"
+                for i in range(self.channels):
+                    header += ", Channel {}".format(i)
+
+                np.savetxt(filename, data.transpose(), delimiter=';', header=header)
+
     def load_settings(self):
         """Load settings from file"""
         try:
@@ -145,14 +189,14 @@ class MainWindow(QMainWindow):
                     self.input_port.setCurrentIndex(
                         self.input_port.findData(settings['port'])
                     )
-                if 'size' in settings and settings['size'] > 0:
+                if 'size' in settings and settings['size'] > 10:
                     self.input_size.setText(str(settings['size']))
                 if 'overlay' in settings:
                     self.input_overlay.setChecked(settings['overlay'])
         except FileNotFoundError:
             return  # Do nothing
         except json.decoder.JSONDecodeError:
-            return  # DO nothing
+            return  # Do nothing
 
     def save_settings(self):
         """Save current settings to file"""
