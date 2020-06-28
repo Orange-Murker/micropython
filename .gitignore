@@ -25,6 +25,7 @@
 build/
 build-*/
 /tools/*/dist/
+/tools/*/settings.json
 
 # Test failure outputs
 ######################

@@ -1,13 +1,24 @@
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIntValidator, QIcon
-from PyQt5.QtCore import pyqtSlot, QIODevice
-from PyQt5.QtSerialPort import QSerialPort
+from PyQt5.QtCore import pyqtSlot, QIODevice, pyqtSignal
+from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 import pyqtgraph as pg
 import numpy as np
-from pyqtgraph import mkPen
+import json
 
 from plot_decoder import PlotDecoder
+
+
+class ComboBox(QComboBox):
+    """Extend QComboBox widget to handle click event"""
+
+    popupAboutToBeShown = pyqtSignal()
+
+    def showPopup(self):
+        """Fire event first, then call parent popup method"""
+        self.popupAboutToBeShown.emit()
+        super(ComboBox, self).showPopup()
 
 
 class MainWindow(QMainWindow):
@@ -26,8 +37,9 @@ class MainWindow(QMainWindow):
 
         # Port control
         layout_port = QFormLayout()
-        self.input_port = QLineEdit()
-        self.input_port.setText("COM3")
+        self.input_port = ComboBox()
+        self.input_port.popupAboutToBeShown.connect(self.find_devices)
+        self.find_devices()
         layout_port.addRow(QLabel("Serial port:"), self.input_port)
         self.button_port = QPushButton(
             "Connect",
@@ -37,7 +49,7 @@ class MainWindow(QMainWindow):
 
         # Data size
         self.input_size = QLineEdit()
-        self.input_size.setValidator(QIntValidator())
+        self.input_size.setValidator(QIntValidator(5, 1000000))
         self.input_size.setText("200")
         layout_port.addRow(QLabel("Samples:"), self.input_size)
 
@@ -64,13 +76,11 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout_main)
         self.setCentralWidget(widget)
 
-        self.setLayout(layout_main)
-
         self.setWindowTitle("uScope")
         self.show()
 
         # Initialize serial
-        self.serial = self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
+        self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
         self.decoder = PlotDecoder()
 
         # Prepare data structure
@@ -84,6 +94,9 @@ class MainWindow(QMainWindow):
 
         self.set_channels(self.channels)
 
+        # Load previous settings
+        self.load_settings()
+
     @pyqtSlot(bool)
     def on_connect_toggle(self, checked):
         """When the serial `connect` button is pressed"""
@@ -93,7 +106,7 @@ class MainWindow(QMainWindow):
         self.serial.close()
 
         if checked:
-            port = self.input_port.text()
+            port = self.input_port.currentData()
             self.serial.setPortName(port)
             if self.serial.open(QIODevice.ReadOnly):  # If serial opened successfully
                 self.input_port.setDisabled(True)
@@ -122,6 +135,53 @@ class MainWindow(QMainWindow):
         for byte in new_bytes:
             if self.decoder.receive_byte(byte):
                 self.update_data(self.decoder.channel_size, self.decoder.time, self.decoder.data)
+
+    def load_settings(self):
+        """Load settings from file"""
+        try:
+            with open("settings.json", "r") as file:
+                settings = json.load(file)
+                if 'port' in settings and settings['port']:
+                    self.input_port.setCurrentIndex(
+                        self.input_port.findData(settings['port'])
+                    )
+                if 'size' in settings and settings['size'] > 0:
+                    self.input_size.setText(str(settings['size']))
+                if 'overlay' in settings:
+                    self.input_overlay.setChecked(settings['overlay'])
+        except FileNotFoundError:
+            return  # Do nothing
+        except json.decoder.JSONDecodeError:
+            return  # DO nothing
+
+    def save_settings(self):
+        """Save current settings to file"""
+        settings = {
+            'port': self.serial.portName(),
+            'size': self.data_size,
+            'overlay': self.overlay
+        }
+        with open("settings.json", "w") as file:
+            file.write(json.dumps(settings))
+
+    def closeEvent(self, event):
+        """When main window is closed"""
+        self.serial.close()
+        self.save_settings()
+
+    def find_devices(self):
+        """Set found serial devices into dropdown"""
+        ports = QSerialPortInfo.availablePorts()
+
+        self.input_port.clear()
+
+        for port in ports:
+
+            label = port.portName()
+            if port.description:
+                label += " - " + port.description()
+
+            self.input_port.addItem(label, port.portName())
 
     def start_recording(self):
         """Called when recording should start (e.g. when `connect` was hit)"""
@@ -217,7 +277,7 @@ class MainWindow(QMainWindow):
 
         for i, curve in enumerate(self.curves):
             c = self.LINECOLORS[i % len(self.LINECOLORS)]  # Set automatic colors
-            pen = mkPen(c, width=2)
+            pen = pg.mkPen(c, width=2)
             curve.setPen(pen)
 
 
