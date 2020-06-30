@@ -6,7 +6,7 @@
 #
 
 from serial.tools import list_ports
-from pyboard import Pyboard, PyboardError
+from pyboard import Pyboard
 import glob
 import os
 
@@ -29,14 +29,12 @@ def find_ports():
 	ports = list_ports.comports()
 
 	hints = ["pyboard", "stm", "st-link"]
-	i_hint = 0
+	i_hint = len(ports) - 1  # Last one is likely what we're looking for
 	found = False
 
 	for hint in hints:
 		for i_port, port in enumerate(ports):
-
 			if port.description.lower().find(hint) >= 0:
-				print("Found:", i_port)
 				i_hint = i_port
 				found = True
 				break
@@ -55,8 +53,9 @@ def select_port(ports, i_hint = 0):
 
 	selected_port = -1
 
-	while not (selected_port >= 0 and selected_port < len(ports)):
-		selected_port = input("Choose device [{}]: ".format(i_hint))
+	while not (0 <= selected_port < len(ports)):
+		query = "Choose device [{}]: ".format(i_hint)
+		selected_port = input(query)
 		try:
 			selected_port = int(selected_port)
 		except ValueError:
@@ -67,6 +66,10 @@ def select_port(ports, i_hint = 0):
 
 ports, i_hint = find_ports()
 
+if not ports:
+	print("No serial devices found")
+	exit(1)
+
 port = select_port(ports, i_hint)
 
 # Connect
@@ -75,8 +78,8 @@ pyb = PyboardExtended(port.device, 115200)
 # Files to be copied
 files = glob.glob("**/*py", recursive=True)
 
-
 # Start copy
+print("Connecting to REPL...")
 pyb.enter_raw_repl()
 
 for file in files:
@@ -86,11 +89,9 @@ for file in files:
 	if dir:
 		pyb.fs_mkdir_s(dir)
 
-
 	pyb.fs_put(file, file)
 
 pyb.exit_raw_repl()
-
 pyb.close()
 
 print("Done")
