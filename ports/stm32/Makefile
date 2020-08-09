@@ -2,10 +2,8 @@
 # then default to PYBV10.
 BOARD ?= NUCLEO_H743ZI
 # Add biorobotics C modules in /modules/C/ 
-# And enable the extra flag or something?
+# And enable the extra flags their respective makefiles
 USER_C_MODULES=modules/C
-CFLAGS_EXTRA=-DMODULE_UART3BR_ENABLED=1
-# all
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
