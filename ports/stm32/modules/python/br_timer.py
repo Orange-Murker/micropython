@@ -33,8 +33,6 @@ class ticker:
         self.fun_wrap_ref = self.fun_wrap
         self.GC = GC
 
-        self.start()
-
     def fun_wrap(self, _):
         # Execute the callback function 
         self.fun()
