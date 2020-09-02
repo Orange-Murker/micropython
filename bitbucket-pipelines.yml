@@ -1,0 +1,37 @@
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: stronglytyped/arm-none-eabi-gcc
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - mpybuild
+          - stmbuild
+        script:
+          - TAG=$()
+          - apt update
+          - apt install libffi-dev pkg-config python3 zip unzip -y
+          - cd mpy-cross
+          - make
+          - cd ../ports/stm32
+          - make submodules
+          - make BOARD=NUCLEO_H743ZI
+          - cd build-NUCLEO_H743ZI
+          - ARCHIVE="micropython-development_stm32H743.zip"
+          - echo "This is a development version and was not properly tested! Commit:" > README.txt
+          - echo $BITBUCKET_COMMIT >> README.txt
+          - zip $ARCHIVE firmware.hex firmware.elf firmware.dfu README.txt
+          - pipe: atlassian/bitbucket-upload-file:0.1.8
+            variables:
+              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+              FILENAME: "$ARCHIVE"
+              ACCOUNT: 'ctw-bw'
+              REPOSITORY: 'micropython'
+
+definitions:
+  caches:
+    mpybuild: mpy-cross/build
+    stmbuild: ports/stm32/build-NUCLEO_H743ZI
