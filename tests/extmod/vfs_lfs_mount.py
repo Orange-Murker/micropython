@@ -58,20 +58,27 @@ def test(bdev, vfs_class):
         f.write('print("package")\n')
     import lfspkg
 
+    # chdir and import module from current directory (needs "" in sys.path)
+    uos.mkdir("/lfs/subdir")
+    uos.chdir("/lfs/subdir")
+    uos.rename("/lfs/lfsmod.py", "/lfs/subdir/lfsmod2.py")
+    import lfsmod2
+
     # umount
     uos.umount("/lfs")
 
     # clear imported modules
-    sys.modules.clear()
+    usys.modules.clear()
 
 
 bdev = RAMBlockDevice(30)
 
 # initialise path
-import sys
+import usys
 
-sys.path.clear()
-sys.path.append("/lfs")
+usys.path.clear()
+usys.path.append("/lfs")
+usys.path.append("")
 
 # run tests
 test(bdev, uos.VfsLfs1)
