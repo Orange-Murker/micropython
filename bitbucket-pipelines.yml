@@ -18,6 +18,8 @@ pipelines:
           - cd ../ports/stm32
           - make submodules
           - make BOARD=NUCLEO_H743ZI
+# Stop here if not in master or dev
+          - if [ "$BITBUCKET_BRANCH" != "master" ] && [ "$BITBUCKET_BRANCH" != "development" ]; then exit 0; fi
           - cd build-NUCLEO_H743ZI
           - ARCHIVE="micropython-development_stm32H743.zip"
           - echo "This is a development version and was not properly tested! Commit:" > README.txt
