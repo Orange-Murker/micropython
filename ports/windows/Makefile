@@ -4,6 +4,9 @@ include ../../py/mkenv.mk
 # define main target
 PROG = micropython.exe
 
+# File containing description of content to be frozen into firmware.
+FROZEN_MANIFEST ?= manifest.py
+
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = ../unix/qstrdefsport.h
 

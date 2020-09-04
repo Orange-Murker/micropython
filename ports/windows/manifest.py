@@ -1,0 +1,1 @@
+freeze('$(MPY_DIR)/ports/windows/modules/python', 'mypackage.py')
