@@ -83,7 +83,8 @@
 #define MICROPY_PY_SYS_EXIT         (1)
 #define MICROPY_PY_SYS_PLATFORM     "win32"
 #ifndef MICROPY_PY_SYS_PATH_DEFAULT
-#define MICROPY_PY_SYS_PATH_DEFAULT "~/.micropython/lib"
+// Also included an empty directory to eliminate the difference between REPL and file initiation
+#define MICROPY_PY_SYS_PATH_DEFAULT ";~/.micropython/lib"
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
