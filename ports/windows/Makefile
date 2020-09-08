@@ -1,11 +1,11 @@
 include ../../py/mkenv.mk
 -include mpconfigport.mk
 
-# define main target
-PROG = micropython.exe
-
 # File containing description of content to be frozen into firmware.
 FROZEN_MANIFEST ?= manifest.py
+
+# define main target
+PROG = micropython.exe
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = ../unix/qstrdefsport.h
@@ -51,6 +51,16 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 ifeq ($(MICROPY_USE_READLINE),1)
 CFLAGS_MOD += -DMICROPY_USE_READLINE=1
 SRC_C += lib/mp-readline/readline.c
+endif
+
+# Additional settings for frozen modules
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
+# To use frozen code create a manifest.py file with a description of files to
+# freeze, then invoke make with FROZEN_MANIFEST=manifest.py (be sure to build from scratch).
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+CFLAGS += -DMPZ_DIG_SIZE=16 # force 16 bits to work on both 32 and 64 bit archs
+MPY_CROSS_FLAGS += -mcache-lookup-bc
 endif
 
 LIB += -lws2_32
