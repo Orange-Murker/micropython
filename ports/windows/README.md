@@ -39,6 +39,8 @@ Or for 64bit:
 Building using MS Visual Studio 2013 (or higher)
 ------------------------------------------------
 
+*Note that building for Windows using VS Studio will **not** include the custom frozen modules!*
+
 In the IDE, open `micropython.vcxproj` and build.
 
 To build from the command line:
