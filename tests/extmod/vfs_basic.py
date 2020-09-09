@@ -10,9 +10,8 @@ except (ImportError, AttributeError):
 
 
 class Filesystem:
-    def __init__(self, id, fail=0):
+    def __init__(self, id):
         self.id = id
-        self.fail = fail
 
     def mount(self, readonly, mkfs):
         print(self.id, "mount", readonly, mkfs)
@@ -26,8 +25,6 @@ class Filesystem:
 
     def chdir(self, dir):
         print(self.id, "chdir", dir)
-        if self.fail:
-            raise OSError(self.fail)
 
     def getcwd(self):
         print(self.id, "getcwd")
@@ -161,18 +158,3 @@ uos.chdir("/")
 uos.umount("/")
 print(uos.listdir("/"))
 uos.umount("/mnt")
-
-# chdir to a non-existent mount point (current directory should remain unchanged)
-try:
-    uos.chdir("/foo")
-except OSError:
-    print("OSError")
-print(uos.getcwd())
-
-# chdir to a non-existent subdirectory in a mounted filesystem
-uos.mount(Filesystem(5, 1), "/mnt")
-try:
-    uos.chdir("/mnt/subdir")
-except OSError:
-    print("OSError")
-print(uos.getcwd())

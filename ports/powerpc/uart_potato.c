@@ -34,12 +34,10 @@
 #include <stdbool.h>
 #include "py/mpconfig.h"
 
-#define SYSCON_BASE     0xc0000000  /* System control regs */
-#define SYS_REG_CLKINFO                 0x20
-
+#define PROC_FREQ                           50000000
 #define UART_FREQ                           115200
 #define POTATO_UART_BASE                    0xc0002000
-static uint64_t potato_uart_base;
+uint64_t potato_uart_base;
 
 #define POTATO_CONSOLE_TX                   0x00
 #define POTATO_CONSOLE_RX                   0x08
@@ -62,7 +60,7 @@ static uint64_t potato_uart_reg_read(int offset) {
     return val;
 }
 
-static void potato_uart_reg_write(int offset, uint64_t val) {
+void potato_uart_reg_write(int offset, uint64_t val) {
     uint64_t addr;
 
     addr = potato_uart_base + offset;
@@ -98,16 +96,13 @@ static unsigned long potato_uart_divisor(unsigned long proc_freq, unsigned long 
     return proc_freq / (uart_freq * 16) - 1;
 }
 
-void uart_init_ppc(void) {
-    uint64_t proc_freq;
-
+void potato_uart_init(void) {
     potato_uart_base = POTATO_UART_BASE;
-    proc_freq = *(volatile uint64_t *)(SYSCON_BASE + SYS_REG_CLKINFO);
-    potato_uart_reg_write(POTATO_CONSOLE_CLOCK_DIV, potato_uart_divisor(proc_freq, UART_FREQ));
+    potato_uart_reg_write(POTATO_CONSOLE_CLOCK_DIV, potato_uart_divisor(PROC_FREQ, UART_FREQ));
 
 }
 
-int mp_hal_stdin_rx_chr(void) {
+char potato_uart_read(void) {
     uint64_t val;
 
     while (potato_uart_rx_empty()) {
@@ -118,15 +113,13 @@ int mp_hal_stdin_rx_chr(void) {
     return (char)(val & 0x000000ff);
 }
 
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    int i;
+void potato_uart_write(char c) {
+    uint64_t val;
 
-    for (i = 0; i < len; i++) {
-        uint64_t val = str[i];
+    val = c;
 
-        while (potato_uart_tx_full()) {
-            ;
-        }
-        potato_uart_reg_write(POTATO_CONSOLE_TX, val);
+    while (potato_uart_tx_full()) {
+        ;
     }
+    potato_uart_reg_write(POTATO_CONSOLE_TX, val);
 }

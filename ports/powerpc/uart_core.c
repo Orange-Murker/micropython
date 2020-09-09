@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020 Glenn Ruben Bakke
+ * Copyright (c) 2019, Michael Neuling, IBM Corporation.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,50 @@
  * THE SOFTWARE.
  */
 
-// Board overridable build configuration.
+#include <unistd.h>
+#include <stdbool.h>
 
-#ifndef MICROPY_MBFS
-#define MICROPY_MBFS                       (1)
-#endif
+#include "py/mpconfig.h"
+#include "uart_potato.h"
+#include "uart_lpc_serial.h"
 
-#ifndef MICROPY_VFS
-#define MICROPY_VFS                        (0)
-#endif
+static int lpc_console;
+static int potato_console;
 
-// Board overridable feature configuration.
+void uart_init_ppc(int lpc) {
+    lpc_console = lpc;
 
-#ifndef MICROPY_PY_ARRAY_SLICE_ASSIGN
-#define MICROPY_PY_ARRAY_SLICE_ASSIGN      (1)
-#endif
+    if (!lpc_console) {
+        potato_console = 1;
 
-#ifndef MICROPY_PY_SYS_STDFILES
-#define MICROPY_PY_SYS_STDFILES            (1)
-#endif
+        potato_uart_init();
+    } else {
+        lpc_uart_init();
+    }
+}
 
-#ifndef MICROPY_PY_UBINASCII
-#define MICROPY_PY_UBINASCII               (1)
-#endif
+// Receive single character
+int mp_hal_stdin_rx_chr(void) {
+    unsigned char c = 0;
+    if (lpc_console) {
+        c = lpc_uart_read();
+    } else if (potato_console) {
+        c = potato_uart_read();
+    }
+    return c;
+}
+
+// Send string of given length
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+    if (lpc_console) {
+        int i;
+        for (i = 0; i < len; i++) {
+            lpc_uart_write(str[i]);
+        }
+    } else if (potato_console) {
+        int i;
+        for (i = 0; i < len; i++) {
+            potato_uart_write(str[i]);
+        }
+    }
+}

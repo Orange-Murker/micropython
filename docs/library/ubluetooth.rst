@@ -48,13 +48,8 @@ Configuration
     - ``'mac'``: Returns the device MAC address. If a device has a fixed address
       (e.g. PYBD) then it will be returned. Otherwise (e.g. ESP32) a random
       address will be generated when the BLE interface is made active.
-
-      **Note:** on some ports, accessing this value requires that the interface is
+      Note: on some ports, accessing this value requires that the interface is
       active (so that the MAC address can be queried from the controller).
-
-    - ``'gap_name'``: Get/set the GAP device name used by service 0x1800,
-      characteristic 0x2a00.  This can be set at any time and changed multiple
-      times.
 
     - ``'rxbuf'``: Get/set the size in bytes of the internal buffer used to store
       incoming events.  This buffer is global to the entire BLE driver and so
@@ -66,18 +61,21 @@ Configuration
 Event Handling
 --------------
 
-.. method:: BLE.irq(handler)
+.. method:: BLE.irq(handler, trigger=0xffff)
 
     Registers a callback for events from the BLE stack. The *handler* takes two
     arguments, ``event`` (which will be one of the codes below) and ``data``
     (which is an event-specific tuple of values).
 
-    **Note:** the ``addr``, ``adv_data``, ``char_data``, ``notify_data``, and
-    ``uuid`` entries in the tuples are references to data managed by the
-    :mod:`ubluetooth` module (i.e. the same instance will be re-used across
-    multiple calls to the event handler). If your program wants to use this
-    data outside of the handler, then it must copy them first, e.g. by using
-    ``bytes(addr)`` or ``bluetooth.UUID(uuid)``.
+    The optional *trigger* parameter allows you to set a mask of events that
+    your program is interested in. The default is all events.
+
+    Note: the ``addr``, ``adv_data``, ``char_data``, ``notify_data``, and
+    ``uuid`` entries in the tuples are
+    references to data managed by the :mod:`ubluetooth` module (i.e. the same
+    instance will be re-used across multiple calls to the event handler). If
+    your program wants to use this data outside of the handler, then it must
+    copy them first, e.g. by using ``bytes(addr)`` or ``bluetooth.UUID(uuid)``.
 
     An event handler showing all possible events::
 
@@ -99,7 +97,7 @@ Event Handling
             elif event == _IRQ_SCAN_RESULT:
                 # A single scan result.
                 addr_type, addr, adv_type, rssi, adv_data = data
-            elif event == _IRQ_SCAN_DONE:
+            elif event == _IRQ_SCAN_COMPLETE:
                 # Scan duration finished or manually stopped.
                 pass
             elif event == _IRQ_PERIPHERAL_CONNECT:
@@ -111,36 +109,17 @@ Event Handling
             elif event == _IRQ_GATTC_SERVICE_RESULT:
                 # Called for each service found by gattc_discover_services().
                 conn_handle, start_handle, end_handle, uuid = data
-            elif event == _IRQ_GATTC_SERVICE_DONE:
-                # Called once service discovery is complete.
-                # Note: Status will be zero on success, implementation-specific value otherwise.
-                conn_handle, status = data
             elif event == _IRQ_GATTC_CHARACTERISTIC_RESULT:
                 # Called for each characteristic found by gattc_discover_services().
                 conn_handle, def_handle, value_handle, properties, uuid = data
-            elif event == _IRQ_GATTC_CHARACTERISTIC_DONE:
-                # Called once service discovery is complete.
-                # Note: Status will be zero on success, implementation-specific value otherwise.
-                conn_handle, status = data
             elif event == _IRQ_GATTC_DESCRIPTOR_RESULT:
                 # Called for each descriptor found by gattc_discover_descriptors().
                 conn_handle, dsc_handle, uuid = data
-            elif event == _IRQ_GATTC_DESCRIPTOR_DONE:
-                # Called once service discovery is complete.
-                # Note: Status will be zero on success, implementation-specific value otherwise.
-                conn_handle, status = data
             elif event == _IRQ_GATTC_READ_RESULT:
                 # A gattc_read() has completed.
                 conn_handle, value_handle, char_data = data
-            elif event == _IRQ_GATTC_READ_DONE:
-                # A gattc_read() has completed.
-                # Note: The value_handle will be zero on btstack (but present on NimBLE).
-                # Note: Status will be zero on success, implementation-specific value otherwise.
-                conn_handle, value_handle, status = data
-            elif event == _IRQ_GATTC_WRITE_DONE:
+            elif event == _IRQ_GATTC_WRITE_STATUS:
                 # A gattc_write() has completed.
-                # Note: The value_handle will be zero on btstack (but present on NimBLE).
-                # Note: Status will be zero on success, implementation-specific value otherwise.
                 conn_handle, value_handle, status = data
             elif event == _IRQ_GATTC_NOTIFY:
                 # A peripheral has sent a notify request.
@@ -148,34 +127,25 @@ Event Handling
             elif event == _IRQ_GATTC_INDICATE:
                 # A peripheral has sent an indicate request.
                 conn_handle, value_handle, notify_data = data
-            elif event == _IRQ_GATTS_INDICATE_DONE:
-                # A central has acknowledged the indication.
-                # Note: Status will be zero on successful acknowledgment, implementation-specific value otherwise.
-                conn_handle, value_handle, status = data
 
 The event codes are::
 
     from micropython import const
-    _IRQ_CENTRAL_CONNECT = const(1)
-    _IRQ_CENTRAL_DISCONNECT = const(2)
-    _IRQ_GATTS_WRITE = const(3)
-    _IRQ_GATTS_READ_REQUEST = const(4)
-    _IRQ_SCAN_RESULT = const(5)
-    _IRQ_SCAN_DONE = const(6)
-    _IRQ_PERIPHERAL_CONNECT = const(7)
-    _IRQ_PERIPHERAL_DISCONNECT = const(8)
-    _IRQ_GATTC_SERVICE_RESULT = const(9)
-    _IRQ_GATTC_SERVICE_DONE = const(10)
-    _IRQ_GATTC_CHARACTERISTIC_RESULT = const(11)
-    _IRQ_GATTC_CHARACTERISTIC_DONE = const(12)
-    _IRQ_GATTC_DESCRIPTOR_RESULT = const(13)
-    _IRQ_GATTC_DESCRIPTOR_DONE = const(14)
-    _IRQ_GATTC_READ_RESULT = const(15)
-    _IRQ_GATTC_READ_DONE = const(16)
-    _IRQ_GATTC_WRITE_DONE = const(17)
-    _IRQ_GATTC_NOTIFY = const(18)
-    _IRQ_GATTC_INDICATE = const(19)
-    _IRQ_GATTS_INDICATE_DONE = const(20)
+    _IRQ_CENTRAL_CONNECT                 = const(1 << 0)
+    _IRQ_CENTRAL_DISCONNECT              = const(1 << 1)
+    _IRQ_GATTS_WRITE                     = const(1 << 2)
+    _IRQ_GATTS_READ_REQUEST              = const(1 << 3)
+    _IRQ_SCAN_RESULT                     = const(1 << 4)
+    _IRQ_SCAN_COMPLETE                   = const(1 << 5)
+    _IRQ_PERIPHERAL_CONNECT              = const(1 << 6)
+    _IRQ_PERIPHERAL_DISCONNECT           = const(1 << 7)
+    _IRQ_GATTC_SERVICE_RESULT            = const(1 << 8)
+    _IRQ_GATTC_CHARACTERISTIC_RESULT     = const(1 << 9)
+    _IRQ_GATTC_DESCRIPTOR_RESULT         = const(1 << 10)
+    _IRQ_GATTC_READ_RESULT               = const(1 << 11)
+    _IRQ_GATTC_WRITE_STATUS              = const(1 << 12)
+    _IRQ_GATTC_NOTIFY                    = const(1 << 13)
+    _IRQ_GATTC_INDICATE                  = const(1 << 14)
 
 In order to save space in the firmware, these constants are not included on the
 :mod:`ubluetooth` module. Add the ones that you need from the list above to your
@@ -195,7 +165,7 @@ Broadcaster Role (Advertiser)
     protocol (e.g. ``bytes``, ``bytearray``, ``str``). *adv_data* is included
     in all broadcasts, and *resp_data* is send in reply to an active scan.
 
-    **Note:** if *adv_data* (or *resp_data*) is ``None``, then the data passed
+    Note: if *adv_data* (or *resp_data*) is ``None``, then the data passed
     to the previous call to ``gap_advertise`` will be re-used. This allows a
     broadcaster to resume advertising with just ``gap_advertise(interval_us)``.
     To clear the advertising payload pass an empty ``bytes``, i.e. ``b''``.
@@ -204,7 +174,7 @@ Broadcaster Role (Advertiser)
 Observer Role (Scanner)
 -----------------------
 
-.. method:: BLE.gap_scan(duration_ms, [interval_us], [window_us], [active])
+.. method:: BLE.gap_scan(duration_ms, [interval_us], [window_us])
 
     Run a scan operation lasting for the specified duration (in **milli**\ seconds).
 
@@ -228,10 +198,8 @@ Observer Role (Scanner)
         * 0x03 - ADV_NONCONN_IND - non-connectable undirected advertising
         * 0x04 - SCAN_RSP - scan response
 
-    ``active`` can be set ``True`` if you want to receive scan responses in the results.
-    
     When scanning is stopped (either due to the duration finishing or when
-    explicitly stopped), the ``_IRQ_SCAN_DONE`` event will be raised.
+    explicitly stopped), the ``_IRQ_SCAN_COMPLETE`` event will be raised.
 
 
 Peripheral Role (GATT Server)
@@ -288,8 +256,8 @@ writes from a central to a given characteristic, use
         ( (hr,), (tx, rx,), ) = bt.gatts_register_services(SERVICES)
 
     The three value handles (``hr``, ``tx``, ``rx``) can be used with
-    :meth:`gatts_read <BLE.gatts_read>`, :meth:`gatts_write <BLE.gatts_write>`, :meth:`gatts_notify <BLE.gatts_notify>`, and
-    :meth:`gatts_indicate <BLE.gatts_indicate>`.
+    :meth:`gatts_read <BLE.gatts_read>`, :meth:`gatts_write <BLE.gatts_write>`,
+    and :meth:`gatts_notify <BLE.gatts_notify>`.
 
     **Note:** Advertising must be stopped before registering services.
 
@@ -304,24 +272,12 @@ writes from a central to a given characteristic, use
 
 .. method:: BLE.gatts_notify(conn_handle, value_handle, [data])
 
-    Sends a notification request to a connected central.
+    Notifies a connected central that this value has changed and that it should
+    issue a read of the current value from this peripheral.
 
-    If *data* is specified, then that value is sent to the central as part of
-    the notification. The local value will not be modified.
-
-    Otherwise, if *data* is not specified, then the current local value (as
-    set with :meth:`gatts_write <BLE.gatts_write>`) will be sent.
-
-.. method:: BLE.gatts_indicate(conn_handle, value_handle)
-
-    Sends an indication request to a connected central.
-
-    **Note:** This does not currently support sending a custom value, it will
-    always send the current local value (as set with :meth:`gatts_write
-    <BLE.gatts_write>`).
-
-    On acknowledgment (or failure, e.g. timeout), the
-    ``_IRQ_GATTS_INDICATE_DONE`` event will be raised.
+    If *data* is specified, then the that value is sent to the central as part
+    of the notification, avoiding the need for a separate read request. Note
+    that this will not update the local value stored.
 
 .. method:: BLE.gatts_set_buffer(value_handle, len, append=False, /)
 
@@ -353,42 +309,33 @@ Central Role (GATT Client)
     Returns ``False`` if the connection handle wasn't connected, and ``True``
     otherwise.
 
-.. method:: BLE.gattc_discover_services(conn_handle, [uuid])
+.. method:: BLE.gattc_discover_services(conn_handle)
 
     Query a connected peripheral for its services.
 
-    Optionally specify a service *uuid* to query for that service only.
+    For each service discovered, the ``_IRQ_GATTC_SERVICE_RESULT`` event will be
+    raised.
 
-    For each service discovered, the ``_IRQ_GATTC_SERVICE_RESULT`` event will
-    be raised, followed by ``_IRQ_GATTC_SERVICE_DONE`` on completion.
-
-.. method:: BLE.gattc_discover_characteristics(conn_handle, start_handle, end_handle, [uuid])
+.. method:: BLE.gattc_discover_characteristics(conn_handle, start_handle, end_handle)
 
     Query a connected peripheral for characteristics in the specified range.
 
-    Optionally specify a characteristic *uuid* to query for that
-    characteristic only.
-
-    You can use ``start_handle=1``, ``end_handle=0xffff`` to search for a
-    characteristic in any service.
-
     For each characteristic discovered, the ``_IRQ_GATTC_CHARACTERISTIC_RESULT``
-    event will be raised, followed by ``_IRQ_GATTC_CHARACTERISTIC_DONE`` on completion.
+    event will be raised.
 
 .. method:: BLE.gattc_discover_descriptors(conn_handle, start_handle, end_handle)
 
     Query a connected peripheral for descriptors in the specified range.
 
     For each descriptor discovered, the ``_IRQ_GATTC_DESCRIPTOR_RESULT`` event
-    will be raised, followed by ``_IRQ_GATTC_DESCRIPTOR_DONE`` on completion.
+    will be raised.
 
 .. method:: BLE.gattc_read(conn_handle, value_handle)
 
     Issue a remote read to a connected peripheral for the specified
     characteristic or descriptor handle.
 
-    When a value is available, the ``_IRQ_GATTC_READ_RESULT`` event will be
-    raised. Additionally, the ``_IRQ_GATTC_READ_DONE`` will be raised.
+    On success, the ``_IRQ_GATTC_READ_RESULT`` event will be raised.
 
 .. method:: BLE.gattc_write(conn_handle, value_handle, data, mode=0, /)
 
@@ -406,7 +353,7 @@ Central Role (GATT Client)
           data.
 
     If a response is received from the remote peripheral the
-    ``_IRQ_GATTC_WRITE_DONE`` event will be raised.
+    ``_IRQ_GATTC_WRITE_STATUS`` event will be raised.
 
 
 class UUID

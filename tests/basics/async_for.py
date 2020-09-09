@@ -6,7 +6,7 @@ class AsyncIteratorWrapper:
         print('init')
         self._it = iter(obj)
 
-    def __aiter__(self):
+    async def __aiter__(self):
         print('aiter')
         return self
 

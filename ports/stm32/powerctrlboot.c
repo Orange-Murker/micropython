@@ -25,7 +25,6 @@
  */
 
 #include "py/mphal.h"
-#include "irq.h"
 #include "powerctrl.h"
 
 static inline void powerctrl_config_systick(void) {
