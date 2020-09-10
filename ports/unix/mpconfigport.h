@@ -34,6 +34,9 @@
 // If we're building the minimal variant, ignore the rest of this file.
 #ifndef MICROPY_UNIX_MINIMAL
 
+// Include the "" directory too to eliminate the difference between REPL and file initiation
+#define MICROPY_PY_SYS_PATH_DEFAULT ":~/.micropython/lib:/usr/lib/micropython"
+
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
 #if !defined(MICROPY_EMIT_X64) && defined(__x86_64__)
