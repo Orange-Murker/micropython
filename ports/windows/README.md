@@ -3,6 +3,16 @@ It is based on Unix port, and expected to remain so.
 The port requires additional testing, debugging, and patches. Please
 consider to contribute.
 
+Updating dummy modules submodule
+--------------------------------
+
+When making a fresh clone, deploy the submodule with:
+
+    git submodule update --init ports/windows/modules/python
+	
+To update it with the remote later run:
+
+    git submodule update --remote ports/windows/modules/python
 
 Building on Debian/Ubuntu Linux system
 ---------------------------------------
