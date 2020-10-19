@@ -2,6 +2,11 @@
 
 This folder contains the source to the uScope ('micro-scope'), a real-time serial data scope for micropython boards.
 
+## How to use
+
+Run the packaged .exe or from source (see *getting started*). Select the COM port on which data is being sent (this should be different from the REPL port) and click connect.  
+Use the 'Save' button to make exports, or right-click on a plot to make a singular export.
+
 ## PyQt 5
 
 The GUI is made in PyQt5 (https://build-system.fman.io/pyqt5-tutorial). Development is done from a virtual environment.
@@ -23,6 +28,7 @@ You can also easily set up an IDE like Pycharm to use this virtual environment.
 This virtual environment allows you to install packages and change settings without affecting your
 global installation.
 
-## Executable
+## Building Executable
 
+Install the pyinstaller module first: `python -m pip install pyinstaller`.  
 Generate an executable by running `pyinstaller main.spec` from inside the virtual environment. The `main.spec` file is used for configuration. The executable can be found in `dist/*`.
