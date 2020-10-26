@@ -1,37 +1,131 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: stronglytyped/arm-none-eabi-gcc
+# -----
+#
+# The following actions should be taken for different branches:
+# - development: Build micropython for STM and upload the binary as dev
+# - development_windows: Build micropython for Windows and upload the binary as dev
+# - tag: stm32*: Build micropython for STM and upload binary according to version tag
+# - tag: windows*: Build micropython for STM and upload binary according to version tag
+#
+# - Other branches or types: Build micropython for STM (without uploading anything)
+#
+# E.g. "&build-stm" indicates a new YAML anchor. "*build-stm" calls this anchor.
+#
+image: gcc:10.2
 
-pipelines:
-  default:
-    - step:
+definitions:
+  steps:
+    - step: &build-stm
+        name: Build for STM
+        image: stronglytyped/arm-none-eabi-gcc
         caches:
-          - mpybuild
           - stmbuild
+          - mpybuild
         script:
-          - TAG=$()
-          - apt update
-          - apt install libffi-dev pkg-config python3 zip unzip -y
+          - apt update && apt install libffi-dev pkg-config python3 zip unzip -y
           - cd mpy-cross
           - make
           - cd ../ports/stm32
           - make submodules
           - make BOARD=NUCLEO_H743ZI
-          - cd build-NUCLEO_H743ZI
-          - ARCHIVE="micropython-development_stm32H743.zip"
-          - echo "This is a development version and was not properly tested! Commit:" > README.txt
-          - echo $BITBUCKET_COMMIT >> README.txt
-          - zip $ARCHIVE firmware.hex firmware.elf firmware.dfu README.txt
-          - pipe: atlassian/bitbucket-upload-file:0.1.8
-            variables:
-              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
-              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-              FILENAME: "$ARCHIVE"
-              ACCOUNT: 'ctw-bw'
-              REPOSITORY: 'micropython'
-
-definitions:
+          - cd ../..
+        artifacts:
+          - ports/stm32/build-NUCLEO_H743ZI/firmware*
+    - step: &build-windows
+        name: Build for Windows
+        caches:
+          - windowsbuild
+        script:
+          - git submodule update --init ports/windows/modules/python/
+          - apt update && apt install gcc-mingw-w64 zip -y
+          - cd mpy-cross
+          - make
+          - cd ../ports/windows
+          - make CROSS_COMPILE=i686-w64-mingw32-
+          - cd ../..
+        artifacts:
+          - ports/windows/*.exe
+    - step: &upload-archive
+        # Upload the first .zip found to Bitbucket
+        name: Upload Archive
+        script:
+           - if [ ! -d "upload/" ]; then echo "No upload/ exists, stopping" && exit 0; fi
+           - cd upload
+           - pipe: atlassian/bitbucket-upload-file:0.3.1
+             variables:
+               BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+               BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+               FILENAME: '*.zip'
   caches:
+#   Better not share MPY cache across images
     mpybuild: mpy-cross/build
     stmbuild: ports/stm32/build-NUCLEO_H743ZI
+    windowsbuild: ports/windows/build
+
+pipelines:
+  default:
+    - step: *build-stm
+  branches:
+    development:
+      - step: *build-stm
+      - step:
+          name: Create STM Dev Archive
+          script:
+            - apt update && apt install zip -y
+            - ARCHIVE="micropython_development_stm32.zip"
+            - mkdir upload && cd upload
+            - echo 'This is a development version and was not properly tested! Commit:' > README.txt
+            - echo $BITBUCKET_COMMIT >> README.txt
+            - zip $ARCHIVE ../ports/stm32/build-NUCLEO_H743ZI/firmware.* README.txt -j
+            - cd ..
+          artifacts:
+            - upload/*.zip
+      - step: *upload-archive
+    development_windows:
+      - step: *build-windows
+      - step:
+          name: Create Windows Dev Archive
+          script:
+             - apt update && apt install zip -y
+             - ARCHIVE="micropython_development_windows_x64.zip"
+             - mkdir upload && cd upload
+             - echo 'This is a development version and was not properly tested! Commit:' > README.txt
+             - echo $BITBUCKET_COMMIT >> README.txt
+             - zip $ARCHIVE ../ports/windows/micropython.exe README.txt -j
+             - cd ..
+      - step: *upload-archive
+    '**windows*':
+      - step: *build-windows
+  tags:
+    'stm32*':
+      - step: *build-stm
+      - step:
+          name: Create STM Release Archive
+          script:
+            - apt update && apt install zip -y
+            - ARCHIVE="micropython_${BITBUCKET_TAG}.zip"
+            - mkdir upload && cd upload
+            - echo 'This is a release version. Version:' > README.txt
+            - echo $BITBUCKET_TAG >> README.txt
+            - zip $ARCHIVE ../ports/stm32/build-NUCLEO_H743ZI/firmware.* README.txt -j
+            - cd ..
+          artifacts:
+            - upload/*.zip
+      - step: *upload-archive
+    'windows*':
+      - step: *build-windows
+      - step:
+          name: Create Windows Release Archive
+          script:
+            - apt update && apt install zip -y
+            - ARCHIVE="micropython_${BITBUCKET_TAG}.zip"
+            - mkdir upload && cd upload
+            - echo 'This is a release version. Version:' > README.txt
+            - echo $BITBUCKET_TAG >> README.txt
+            - zip $ARCHIVE ../ports/windows/micropython.exe README.txt -j
+            - cd ..
+          artifacts:
+            - upload/*.zip
+      - step: *upload-archive

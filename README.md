@@ -1,14 +1,14 @@
-[![Build Status](https://travis-ci.com/micropython/micropython.png?branch=master)](https://travis-ci.com/micropython/micropython) [![Coverage Status](https://coveralls.io/repos/micropython/micropython/badge.png?branch=master)](https://coveralls.io/r/micropython/micropython?branch=master)
+MicroPython - BioRobotics
+=========================
 
-The MicroPython project
-=======================
-<p align="center">
-  <img src="https://raw.githubusercontent.com/micropython/micropython/master/logo/upython-with-micro.jpg" alt="MicroPython Logo"/>
-</p>
+![MicroPython Logo](https://raw.githubusercontent.com/micropython/micropython/master/logo/upython-with-micro.jpg)
 
 This is the MicroPython project, which aims to put an implementation
 of Python 3.x on microcontrollers and small embedded systems.
 You can find the official website at [micropython.org](http://www.micropython.org).
+
+**This is a fork of the original, focussed for the BioRobotics educational
+module. This has been made by the Biomechanical Engineering group.**
 
 WARNING: this project is in beta stage and is subject to changes of the
 code-base, including project-wide name changes and API changes.
@@ -30,32 +30,34 @@ See the repository http://github.com/micropython/pyboard for the MicroPython
 board (PyBoard), the officially supported reference electronic circuit board.
 
 Major components in this repository:
-- py/ -- the core Python implementation, including compiler, runtime, and
+
+* py/ -- the core Python implementation, including compiler, runtime, and
   core library.
-- mpy-cross/ -- the MicroPython cross-compiler which is used to turn scripts
+* mpy-cross/ -- the MicroPython cross-compiler which is used to turn scripts
   into precompiled bytecode.
-- ports/unix/ -- a version of MicroPython that runs on Unix.
-- ports/stm32/ -- a version of MicroPython that runs on the PyBoard and similar
+* ports/unix/ -- a version of MicroPython that runs on Unix.
+* ports/stm32/ -- a version of MicroPython that runs on the PyBoard and similar
   STM32 boards (using ST's Cube HAL drivers).
-- ports/minimal/ -- a minimal MicroPython port. Start with this if you want
+* ports/minimal/ -- a minimal MicroPython port. Start with this if you want
   to port MicroPython to another microcontroller.
-- tests/ -- test framework and test scripts.
-- docs/ -- user documentation in Sphinx reStructuredText format. Rendered
+* tests/ -- test framework and test scripts.
+* docs/ -- user documentation in Sphinx reStructuredText format. Rendered
   HTML documentation is available at http://docs.micropython.org.
 
 Additional components:
-- ports/bare-arm/ -- a bare minimum version of MicroPython for ARM MCUs. Used
+
+* ports/bare-arm/ -- a bare minimum version of MicroPython for ARM MCUs. Used
   mostly to control code size.
-- ports/teensy/ -- a version of MicroPython that runs on the Teensy 3.1
+* ports/teensy/ -- a version of MicroPython that runs on the Teensy 3.1
   (preliminary but functional).
-- ports/pic16bit/ -- a version of MicroPython for 16-bit PIC microcontrollers.
-- ports/cc3200/ -- a version of MicroPython that runs on the CC3200 from TI.
-- ports/esp8266/ -- a version of MicroPython that runs on Espressif's ESP8266 SoC.
-- ports/esp32/ -- a version of MicroPython that runs on Espressif's ESP32 SoC.
-- ports/nrf/ -- a version of MicroPython that runs on Nordic's nRF51 and nRF52 MCUs.
-- extmod/ -- additional (non-core) modules implemented in C.
-- tools/ -- various tools, including the pyboard.py module.
-- examples/ -- a few example Python scripts.
+* ports/pic16bit/ -- a version of MicroPython for 16-bit PIC microcontrollers.
+* ports/cc3200/ -- a version of MicroPython that runs on the CC3200 from TI.
+* ports/esp8266/ -- a version of MicroPython that runs on Espressif's ESP8266 SoC.
+* ports/esp32/ -- a version of MicroPython that runs on Espressif's ESP32 SoC.
+* ports/nrf/ -- a version of MicroPython that runs on Nordic's nRF51 and nRF52 MCUs.
+* extmod/ -- additional (non-core) modules implemented in C.
+* tools/ -- various tools, including the pyboard.py module.
+* examples/ -- a few example Python scripts.
 
 The subdirectories above may include READMEs with additional info.
 
@@ -176,6 +178,13 @@ This will use the included `tools/pydfu.py` script.  If flashing the firmware
 does not work it may be because you don't have the correct permissions, and
 need to use `sudo make deploy`.
 See the README.md file in the ports/stm32/ directory for further details.
+
+Pipelines and Releases
+----------------------
+
+This repository has configured pipelines through `bitbucket-pipelines.yml`. The exact rules are described in a comment at the top of the files. In short: a build is made on each pushed commit to test the code. On tagging commits a certain way, the compiled result is automatically uploaded to the downloads section. This is a convenient way of making consistent release.
+
+Tag a commit like "stm32-v1.2.3" or "windows-v1.2.3" to make STM and Windows releases.
 
 Contributing
 ------------
