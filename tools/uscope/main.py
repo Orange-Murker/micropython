@@ -18,7 +18,7 @@ class ComboBox(QComboBox):
     def showPopup(self):
         """Fire event first, then call parent popup method"""
         self.popupAboutToBeShown.emit()
-        super(ComboBox, self).showPopup()
+        super().showPopup()
 
 
 class MainWindow(QMainWindow):
@@ -45,6 +45,9 @@ class MainWindow(QMainWindow):
         self.overlay = False  # When true, all plots should be combined in one plot
         self.autoscale = True  # Automatic y-scaling when true
         self.y_scale = [-10.0, 10.0]  # Y-scale values when not automatic
+        self.render_frames = 1  # Render every nth serial frame (increase to ease performance)
+
+        self.last_update = 0  # Keep track of how long ago the graphs were last updated
 
         self.build_ui_elements()  # Put actual GUI together
 
@@ -108,6 +111,14 @@ class MainWindow(QMainWindow):
 
         layout_settings.addRow(QLabel("Y-scale:"), layout_scaling)
 
+        # Update rate
+        self.input_render = QLineEdit()
+        self.input_render.setToolTip("Increase this value to slow down the graph rendering. If set to 1, the graph is"
+                                     "updated on each frame. When set to e.g. 5 the graph will only be re-rendered"
+                                     "every five frames. Use this if the applications starts to lag.")
+        self.input_render.setText(str(self.render_frames))
+        layout_settings.addRow(QLabel("Frame updates:"), self.input_render)
+
         # Attach top layout
         layout_top.addLayout(layout_settings)
         layout_top.addWidget(self.button_port)
@@ -156,6 +167,8 @@ class MainWindow(QMainWindow):
                 self.input_port.setDisabled(True)
                 self.input_size.setDisabled(True)
                 self.input_overlay.setDisabled(True)
+                self.input_autoscale.setDisabled(True)
+                self.input_render.setDisabled(True)
                 self.start_recording()
             else:
                 self.button_port.setChecked(False)  # Undo toggle
@@ -164,6 +177,8 @@ class MainWindow(QMainWindow):
             self.input_port.setDisabled(False)
             self.input_size.setDisabled(False)
             self.input_overlay.setDisabled(False)
+            self.input_autoscale.setDisabled(False)
+            self.input_render.setDisabled(False)
 
     @pyqtSlot(bool)
     def on_autoscale_toggle(self, checked):
@@ -240,6 +255,8 @@ class MainWindow(QMainWindow):
                     self.input_scale['max'].setText(str(settings['y_scale_max']))
                 if 'y_scale_min' in settings:
                     self.input_scale['min'].setText(str(settings['y_scale_min']))
+                if 'render_frames' in settings:
+                    self.input_render.setText(str(settings['render_frames']))
         except FileNotFoundError:
             return  # Do nothing
         except json.decoder.JSONDecodeError:
@@ -253,7 +270,8 @@ class MainWindow(QMainWindow):
             'overlay': self.overlay,
             'autoscale': self.autoscale,
             'y_scale_min': self.y_scale[0],
-            'y_scale_max': self.y_scale[1]
+            'y_scale_max': self.y_scale[1],
+            'render_frames': self.render_frames
         }
         with open("settings.json", "w") as file:
             file.write(json.dumps(settings))
@@ -289,6 +307,7 @@ class MainWindow(QMainWindow):
             float(self.input_scale['min'].text()),
             float(self.input_scale['max'].text())
         ]
+        self.render_frames = int(self.input_render.text())
 
         self.serial.clear()  # Get rid of data in buffer
 
@@ -311,7 +330,11 @@ class MainWindow(QMainWindow):
 
         self.data_points += 1
 
-        self.update_plots()
+        if self.last_update + 1 >= self.render_frames:
+            self.update_plots()
+            self.last_update = 0
+        else:
+            self.last_update += 1
 
     def update_plots(self):
         """With data already updated, update plots"""
@@ -338,6 +361,8 @@ class MainWindow(QMainWindow):
         self.time = np.zeros((1, self.data_size))
         self.time_offset = None
         self.data_points = 0
+
+        self.last_update = 0
 
         self.create_plots()
 
