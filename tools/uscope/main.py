@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIntValidator, QIcon
+from PyQt5.QtGui import QIntValidator, QDoubleValidator, QIcon
 from PyQt5.QtCore import pyqtSlot, QIODevice, pyqtSignal
 from PyQt5.QtSerialPort import QSerialPort, QSerialPortInfo
 import pyqtgraph as pg
@@ -29,18 +29,46 @@ class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         """Constructor"""
 
-        super(MainWindow, self).__init__(*args, **kwargs)  # Run parent constructor
+        super().__init__(*args, **kwargs)  # Run parent constructor
+
+        # Initialize serial
+        self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
+        self.decoder = PlotDecoder()
+
+        # Prepare data structure
+        self.channels = 0  # Wait for serial data, resize on the fly
+        self.data = None  # Received data, each row is a channel
+        self.time = None  # Timestamps of each data column
+        self.data_points = 0  # Number of points recorded
+        self.data_size = 200  # Number of points in history
+        self.time_offset = None  # Time offset in microseconds
+        self.overlay = False  # When true, all plots should be combined in one plot
+        self.autoscale = True  # Automatic y-scaling when true
+        self.y_scale = [-10.0, 10.0]  # Y-scale values when not automatic
+
+        self.build_ui_elements()  # Put actual GUI together
+
+        self.setWindowTitle("uScope")
+        self.show()
+
+        self.set_channels(self.channels)
+
+        # Load previous settings
+        self.load_settings()
+
+    def build_ui_elements(self):
+        """Create and connect the Qt Widgets to build the full GUI"""
 
         layout_main = QVBoxLayout()  # Main vertical layout
         layout_top = QHBoxLayout()  # Layout for top buttons
         layout_bottom = QVBoxLayout()  # Layout for channels
 
         # Port control
-        layout_port = QFormLayout()
+        layout_settings = QFormLayout()
         self.input_port = ComboBox()
         self.input_port.popupAboutToBeShown.connect(self.find_devices)
-        self.find_devices()
-        layout_port.addRow(QLabel("Serial port:"), self.input_port)
+        self.find_devices()  # Call it once already so an initial value is chosen
+        layout_settings.addRow(QLabel("Serial port:"), self.input_port)
         self.button_port = QPushButton(
             "Connect",
             checkable=True,
@@ -50,14 +78,38 @@ class MainWindow(QMainWindow):
         # Data size
         self.input_size = QLineEdit()
         self.input_size.setValidator(QIntValidator(5, 1000000))
-        self.input_size.setText("200")
-        layout_port.addRow(QLabel("Samples:"), self.input_size)
+        self.input_size.setText(str(self.data_size))
+        layout_settings.addRow(QLabel("Samples:"), self.input_size)
 
         # Overlay
         self.input_overlay = QCheckBox()
-        layout_port.addRow(QLabel("Overlay channels:"), self.input_overlay)
+        self.input_overlay.setChecked(self.overlay)
+        layout_settings.addRow(QLabel("Overlay channels:"), self.input_overlay)
 
-        layout_top.addLayout(layout_port)
+        # Y-Scale
+        layout_scaling = QHBoxLayout()
+        self.input_autoscale = QCheckBox()
+        self.input_autoscale.setChecked(self.autoscale)
+        self.input_autoscale.toggled.connect(self.on_autoscale_toggle)
+        layout_scaling.addWidget(self.input_autoscale)
+        layout_scaling.addWidget(QLabel("Autoscale"))
+        layout_scaling.addStretch(0)
+        layout_scaling.addWidget(QLabel("Manual scale:"))
+        self.input_scale = {
+            'min': QLineEdit(),
+            'max': QLineEdit()
+        }
+        for key, input_scale in self.input_scale.items():
+            input_scale.setValidator(QDoubleValidator(-1.0e6, 1.0e6, 4))
+            val = self.y_scale[0] if key == 'min' else self.y_scale[1]
+            input_scale.setText(str(val))
+            input_scale.setDisabled(self.autoscale)
+            layout_scaling.addWidget(input_scale)
+
+        layout_settings.addRow(QLabel("Y-scale:"), layout_scaling)
+
+        # Attach top layout
+        layout_top.addLayout(layout_settings)
         layout_top.addWidget(self.button_port)
 
         layout_main.addLayout(layout_top)
@@ -89,27 +141,6 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout_main)
         self.setCentralWidget(widget)
 
-        self.setWindowTitle("uScope")
-        self.show()
-
-        # Initialize serial
-        self.serial = QSerialPort(baudRate=QSerialPort.Baud115200, readyRead=self.on_serial_receive)
-        self.decoder = PlotDecoder()
-
-        # Prepare data structure
-        self.channels = 0  # Wait for serial data, resize on the fly
-        self.data = None  # Received data, each row is a channel
-        self.time = None  # Timestamps of each data column
-        self.data_points = 0  # Number of points recorded
-        self.data_size = 1  # Number of points in history
-        self.time_offset = None  # Time offset in microseconds
-        self.overlay = False  # When true, all plots should be combined in one plot
-
-        self.set_channels(self.channels)
-
-        # Load previous settings
-        self.load_settings()
-
     @pyqtSlot(bool)
     def on_connect_toggle(self, checked):
         """When the serial `connect` button is pressed"""
@@ -134,6 +165,14 @@ class MainWindow(QMainWindow):
             self.input_size.setDisabled(False)
             self.input_overlay.setDisabled(False)
 
+    @pyqtSlot(bool)
+    def on_autoscale_toggle(self, checked):
+        """Callback for the autoscale checkbox"""
+
+        # Enable/disable manual scales
+        for key, input_scale in self.input_scale.items():
+            input_scale.setDisabled(checked)
+
     @pyqtSlot()
     def on_serial_receive(self):
         """"
@@ -153,14 +192,16 @@ class MainWindow(QMainWindow):
     def on_save(self, action):
         self.save_data(action.text())
 
-    def save_data(self, format):
-        """Save data, format is either `csv` or `np`"""
+    def save_data(self, file_format):
+        """Save data, file_format is either `csv` or `numpy`"""
+
+        file_format = file_format.lower()
 
         if np.size(self.data, 0) < 3:
             QMessageBox.information(self, 'Saving data', 'No data recorded yet', QMessageBox.Ok)
             return
 
-        if format == "Numpy":
+        if file_format == "numpy":
             ext = "Numpy Data (*.npz)"
         else:
             ext = "Comma Separated Values (*.csv)"
@@ -170,7 +211,7 @@ class MainWindow(QMainWindow):
             self, "QFileDialog.getSaveFileName()", "", ext, options=options)
 
         if filename:
-            if format == "Numpy":
+            if file_format == "numpy":
                 np.savez(filename, data=self.data, time=self.time)
             else:
                 data = np.vstack((self.time, self.data))
@@ -193,6 +234,12 @@ class MainWindow(QMainWindow):
                     self.input_size.setText(str(settings['size']))
                 if 'overlay' in settings:
                     self.input_overlay.setChecked(settings['overlay'])
+                if 'autoscale' in settings:
+                    self.input_autoscale.setChecked(settings['autoscale'])
+                if 'y_scale_max' in settings:
+                    self.input_scale['max'].setText(str(settings['y_scale_max']))
+                if 'y_scale_min' in settings:
+                    self.input_scale['min'].setText(str(settings['y_scale_min']))
         except FileNotFoundError:
             return  # Do nothing
         except json.decoder.JSONDecodeError:
@@ -203,7 +250,10 @@ class MainWindow(QMainWindow):
         settings = {
             'port': self.serial.portName(),
             'size': self.data_size,
-            'overlay': self.overlay
+            'overlay': self.overlay,
+            'autoscale': self.autoscale,
+            'y_scale_min': self.y_scale[0],
+            'y_scale_max': self.y_scale[1]
         }
         with open("settings.json", "w") as file:
             file.write(json.dumps(settings))
@@ -212,6 +262,7 @@ class MainWindow(QMainWindow):
         """When main window is closed"""
         self.serial.close()
         self.save_settings()
+        super().closeEvent(event)  # Call original method too
 
     def find_devices(self):
         """Set found serial devices into dropdown"""
@@ -228,11 +279,16 @@ class MainWindow(QMainWindow):
             self.input_port.addItem(label, port.portName())
 
     def start_recording(self):
-        """Called when recording should start (e.g. when `connect` was hit)"""
+        """Called when recording should start (e.g. when `Connect` was hit)"""
         self.channels = 0  # Force an update on the next data point
         self.data_points = 0
         self.data_size = int(self.input_size.text())
         self.overlay = self.input_overlay.isChecked()
+        self.autoscale = self.input_autoscale.isChecked()
+        self.y_scale = [
+            float(self.input_scale['min'].text()),
+            float(self.input_scale['max'].text())
+        ]
 
         self.serial.clear()  # Get rid of data in buffer
 
@@ -318,6 +374,8 @@ class MainWindow(QMainWindow):
         # Set style
         for plot in self.plots:
             plot.showGrid(False, True)
+            if not self.autoscale:
+                plot.setYRange(self.y_scale[0], self.y_scale[1])  # Autoscaling is by default
 
         for i, curve in enumerate(self.curves):
             c = self.LINECOLORS[i % len(self.LINECOLORS)]  # Set automatic colors
@@ -328,7 +386,7 @@ class MainWindow(QMainWindow):
 # Run window when file was called as executable
 if __name__ == '__main__':
 
-    app = QApplication([])
+    app = QApplication(sys.argv)
     app.setStyle('Fusion')
     app.setWindowIcon(QIcon('logo.ico'))
     window = MainWindow()
