@@ -7,6 +7,8 @@ This folder contains the source to the uScope ('micro-scope'), a real-time seria
 Run the packaged .exe or from source (see *getting started*). Select the COM port on which data is being sent (this should be different from the REPL port) and click connect.  
 Use the 'Save' button to make exports, or right-click on a plot to make a singular export.
 
+If the applications starts to lag or even crash after conneting, try increasing the render frames value to slow down graph rendering.
+
 ## PyQt 5
 
 The GUI is made in PyQt5 (https://build-system.fman.io/pyqt5-tutorial). Development is done from a virtual environment.

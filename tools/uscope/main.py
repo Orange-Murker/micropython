@@ -113,9 +113,9 @@ class MainWindow(QMainWindow):
 
         # Update rate
         self.input_render = QLineEdit()
-        self.input_render.setToolTip("Increase this value to slow down the graph rendering. If set to 1, the graph is"
-                                     "updated on each frame. When set to e.g. 5 the graph will only be re-rendered"
-                                     "every five frames. Use this if the applications starts to lag.")
+        self.input_render.setToolTip("Increase this value to slow down the graph rendering. If set to 1, the graph is "
+                                     "updated on each frame.\nWhen set to e.g. 5 the graph will only be re-rendered "
+                                     "every fifth frame. Use this if the application starts to lag.")
         self.input_render.setText(str(self.render_frames))
         layout_settings.addRow(QLabel("Frame updates:"), self.input_render)
 
