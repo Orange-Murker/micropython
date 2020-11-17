@@ -36,6 +36,6 @@
 [submodule "lib/nxp_driver"]
 	path = lib/nxp_driver
 	url = https://github.com/hathach/nxp_driver.git
-[submodule ".\\ports\\windows\\modules\\python"]
-	path = .\\ports\\windows\\modules\\python
+[submodule "ports/windows/modules/python"]
+	path = ports/windows/modules/python
 	url = git@bitbucket.org:ctw-bw/micropython-dummy-modules.git

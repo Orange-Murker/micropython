@@ -37,11 +37,11 @@ definitions:
         caches:
           - windowsbuild
         script:
-          - git submodule update --init ports/windows/modules/python/
           - apt update -qq && apt install gcc-mingw-w64 zip -y
           - cd mpy-cross
           - make
           - cd ../ports/windows
+          - make submodules
           - make CROSS_COMPILE=i686-w64-mingw32-
           - cd ../..
         artifacts:
