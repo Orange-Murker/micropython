@@ -164,7 +164,7 @@ To build:
 
     $ cd ports/stm32
     $ make submodules
-    $ make
+    $ make BOARD=NUCLEO_H743ZI
 
 You then need to get your board into DFU mode.  On the pyboard, connect the
 3V3 pin to the P1/DFU pin with a wire (on PYBv1.0 they are next to each other
