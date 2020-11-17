@@ -29,7 +29,8 @@ build-*/
 
 # Test failure outputs
 ######################
-tests/results/*
+tests/*.exp
+tests/*.out
 
 # Python cache files
 ######################

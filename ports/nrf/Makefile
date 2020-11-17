@@ -39,9 +39,7 @@ endif
 QSTR_DEFS = qstrdefsport.h $(BUILD)/pins_qstr.h
 
 # MicroPython feature configurations
-ifeq ($(DEBUG), 0)
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
-endif
 
 # include py core make definitions
 include ../../py/py.mk
@@ -101,7 +99,7 @@ CFLAGS_MCU_m33 = $(CFLAGS_CORTEX_M) -mcpu=cortex-m33 -march=armv8-m.main+dsp -mc
 
 CFLAGS_MCU_m4 = $(CFLAGS_CORTEX_M) -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
-CFLAGS_MCU_m0 = $(CFLAGS_CORTEX_M) -fshort-enums -mtune=cortex-m0 -mcpu=cortex-m0 -mfloat-abi=soft
+CFLAGS_MCU_m0 = $(CFLAGS_CORTEX_M) -fshort-enums -mtune=cortex-m0 -mcpu=cortex-m0 -mfloat-abi=soft -fno-builtin
 
 LTO ?= 1
 ifeq ($(LTO),1)
@@ -113,7 +111,7 @@ endif
 
 
 CFLAGS += $(CFLAGS_MCU_$(MCU_SERIES))
-CFLAGS += $(INC) -Wall -Werror -g -ansi -std=c11 -nostdlib $(COPT) $(NRF_DEFINES) $(CFLAGS_MOD) $(CFLAGS_EXTRA)
+CFLAGS += $(INC) -Wall -Werror -g -ansi -std=c11 -nostdlib $(COPT) $(NRF_DEFINES) $(CFLAGS_MOD)
 CFLAGS += -fno-strict-aliasing
 CFLAGS += -Iboards/$(BOARD)
 CFLAGS += -DNRF5_HAL_H='<$(MCU_VARIANT)_hal.h>'
@@ -214,7 +212,6 @@ SRC_NRFX += $(addprefix lib/nrfx/drivers/src/,\
 	nrfx_uart.c \
 	nrfx_adc.c \
 	nrfx_saadc.c \
-	nrfx_temp.c \
 	nrfx_rng.c \
 	nrfx_twi.c \
 	nrfx_spi.c \
@@ -266,6 +263,7 @@ SRC_C += $(addprefix lib/tinyusb/src/,\
 	class/cdc/cdc_device.c \
 	tusb.c \
 	portable/nordic/nrf5x/dcd_nrf5x.c \
+	portable/nordic/nrf5x/hal_nrf5x.c \
 	)
 endif
 
@@ -421,35 +419,17 @@ sd: $(BUILD)/$(OUTPUT_FILENAME).elf
 	    -ex 'quit' \
 	    $<
 
-else ifeq ($(FLASHER), openocd)
-
-OPENOCD ?= openocd
-
-ifeq ($(MCU_VARIANT), nrf51)
-OPENOCD_TARGET ?= target/nrf52.cfg
-else ifeq ($(MCU_VARIANT), nrf52)
-OPENOCD_TARGET ?= target/nrf52.cfg
-else
-$(error Unsupported openocd target)
-endif
-
-deploy: $(BUILD)/$(OUTPUT_FILENAME).hex
-	$(Q)$(OPENOCD) -f interface/cmsis-dap.cfg -f $(OPENOCD_TARGET) -c "init" -c "program $< verify reset" -c "exit"
-
-sd: $(BUILD)/$(OUTPUT_FILENAME).hex
-	$(Q)$(OPENOCD) -f interface/cmsis-dap.cfg -f $(OPENOCD_TARGET) -c "init" -c "program $(SOFTDEV_HEX) verify reset" -c "exit"
-
 endif
 
 flash: deploy
 
 $(BUILD)/$(OUTPUT_FILENAME).elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDFLAGS_MOD) $(LIBS)
+	$(Q)$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SRC_LIB) $(DRIVERS_SRC_C) $(SRC_BOARD_MODULES) $(SRC_MOD) 
+SRC_QSTR += $(SRC_C) $(SRC_LIB) $(DRIVERS_SRC_C) $(SRC_BOARD_MODULES)
 
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR

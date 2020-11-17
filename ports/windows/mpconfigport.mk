@@ -9,4 +9,5 @@ MICROPY_FORCE_32BIT = 0
 MICROPY_USE_READLINE = 1
 
 # ffi module requires libffi (libffi-dev Debian package)
-MICROPY_PY_FFI = 0
+#MICROPY_PY_FFI = 0
+MICROPY_PY_FFI = 1

@@ -200,12 +200,12 @@ STATIC mp_obj_t machine_hard_uart_make_new(const mp_obj_type_t *type, size_t n_a
 
     // flow control
 #if MICROPY_HW_UART1_HWFC
-    config.hal_cfg.hwfc = NRF_UART_HWFC_ENABLED;
+    config.hwfc = NRF_UART_HWFC_ENABLED;
 #else
-    config.hal_cfg.hwfc = NRF_UART_HWFC_DISABLED;
+    config.hwfc = NRF_UART_HWFC_DISABLED;
 #endif
 
-    config.hal_cfg.parity = NRF_UART_PARITY_EXCLUDED;
+    config.parity = NRF_UART_PARITY_EXCLUDED;
 
 #if (BLUETOOTH_SD == 100)
     config.interrupt_priority = 3;

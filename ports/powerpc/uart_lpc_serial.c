@@ -96,24 +96,20 @@ static int lpc_uart_rx_empty(void) {
     return !(lpc_uart_reg_read(REG_LSR) & LSR_DR);
 }
 
-void uart_init_ppc(void) {
+void lpc_uart_init(void) {
     lpc_uart_base = LPC_UART_BASE;
 }
 
-int mp_hal_stdin_rx_chr(void) {
+char lpc_uart_read(void) {
     while (lpc_uart_rx_empty()) {
         ;
     }
     return lpc_uart_reg_read(REG_THR);
 }
 
-
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    int i;
-    for (i = 0; i < len; i++) {
-        while (lpc_uart_tx_full()) {
-            ;
-        }
-        lpc_uart_reg_write(REG_RBR, str[i]);
+void lpc_uart_write(char c) {
+    while (lpc_uart_tx_full()) {
+        ;
     }
+    lpc_uart_reg_write(REG_RBR, c);
 }

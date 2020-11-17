@@ -83,7 +83,8 @@
 #define MICROPY_PY_SYS_EXIT         (1)
 #define MICROPY_PY_SYS_PLATFORM     "win32"
 #ifndef MICROPY_PY_SYS_PATH_DEFAULT
-#define MICROPY_PY_SYS_PATH_DEFAULT "~/.micropython/lib"
+// Also included an empty directory to eliminate the difference between REPL and file initiation
+#define MICROPY_PY_SYS_PATH_DEFAULT ";~/.micropython/lib"
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
@@ -122,9 +123,6 @@
 #define MICROPY_ERROR_PRINTER       (&mp_stderr_print)
 #define MICROPY_WARNINGS            (1)
 #define MICROPY_PY_STR_BYTES_CMP_WARN (1)
-
-// VFS stat functions should return time values relative to 1970/1/1
-#define MICROPY_EPOCH_IS_1970       (1)
 
 extern const struct _mp_print_t mp_stderr_print;
 
@@ -230,14 +228,6 @@ extern const struct _mp_obj_module_t mp_module_time;
 #define MP_SSIZE_MAX                _I32_MAX
 #endif
 
-// VC++ 12.0 fixes
-#if (_MSC_VER <= 1800)
-#define MICROPY_PY_MATH_ATAN2_FIX_INFNAN (1)
-#define MICROPY_PY_MATH_FMOD_FIX_INFNAN (1)
-#ifdef _WIN64
-#define MICROPY_PY_MATH_MODF_FIX_NEGZERO (1)
-#endif
-#endif
 
 // CL specific definitions
 

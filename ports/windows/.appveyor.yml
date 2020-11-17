@@ -1,7 +1,3 @@
-image: Visual Studio 2013
-clone_depth: 1
-skip_tags: true
-
 environment:
   # Python version used
   MICROPY_CPYTHON3: c:/python34/python.exe
@@ -75,3 +71,10 @@ after_test:
     if ($LASTEXITCODE -ne 0) {
       throw "$env:MSYSTEM mpy-cross tests exited with code $LASTEXITCODE"
     }
+
+skip_tags: true
+
+deploy: off
+
+nuget:
+  disable_publish_on_pr: true

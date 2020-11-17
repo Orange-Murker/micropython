@@ -139,6 +139,7 @@ STATIC mp_uint_t pyb_uart_irq_info(mp_obj_t self_in, mp_uint_t info_type) {
 }
 
 STATIC const mp_irq_methods_t pyb_uart_irq_methods = {
+    .init = pyb_uart_irq,
     .trigger = pyb_uart_irq_trigger,
     .info = pyb_uart_irq_info,
 };
@@ -236,6 +237,11 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
     mp_arg_parse_all(n_args, pos_args, kw_args,
         MP_ARRAY_SIZE(allowed_args), allowed_args, (mp_arg_val_t *)&args);
 
+    // static UARTs are used for internal purposes and shouldn't be reconfigured
+    if (self->is_static) {
+        mp_raise_ValueError(MP_ERROR_TEXT("UART is static and can't be init'd"));
+    }
+
     // baudrate
     uint32_t baudrate = args.baudrate.u_int;
 
@@ -277,16 +283,10 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
     // flow control
     uint32_t flow = args.flow.u_int;
 
-    // Save attach_to_repl setting because uart_init will disable it.
-    bool attach_to_repl = self->attached_to_repl;
-
     // init UART (if it fails, it's because the port doesn't exist)
     if (!uart_init(self, baudrate, bits, parity, stop, flow)) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("UART(%d) doesn't exist"), self->uart_id);
     }
-
-    // Restore attach_to_repl setting so UART still works if attached to dupterm.
-    uart_attach_to_repl(self, attach_to_repl);
 
     // set timeout
     self->timeout = args.timeout.u_int;
@@ -300,28 +300,20 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
         self->timeout_char = min_timeout_char;
     }
 
-    if (self->is_static) {
-        // Static UARTs have fixed memory for the rxbuf and can't be reconfigured.
-        if (args.rxbuf.u_int >= 0) {
-            mp_raise_ValueError(MP_ERROR_TEXT("UART is static and rxbuf can't be changed"));
-        }
-        uart_set_rxbuf(self, self->read_buf_len, self->read_buf);
+    // setup the read buffer
+    m_del(byte, self->read_buf, self->read_buf_len << self->char_width);
+    if (args.rxbuf.u_int >= 0) {
+        // rxbuf overrides legacy read_buf_len
+        args.read_buf_len.u_int = args.rxbuf.u_int;
+    }
+    if (args.read_buf_len.u_int <= 0) {
+        // no read buffer
+        uart_set_rxbuf(self, 0, NULL);
     } else {
-        // setup the read buffer
-        m_del(byte, self->read_buf, self->read_buf_len << self->char_width);
-        if (args.rxbuf.u_int >= 0) {
-            // rxbuf overrides legacy read_buf_len
-            args.read_buf_len.u_int = args.rxbuf.u_int;
-        }
-        if (args.read_buf_len.u_int <= 0) {
-            // no read buffer
-            uart_set_rxbuf(self, 0, NULL);
-        } else {
-            // read buffer using interrupts
-            size_t len = args.read_buf_len.u_int + 1; // +1 to adjust for usable length of buffer
-            uint8_t *buf = m_new(byte, len << self->char_width);
-            uart_set_rxbuf(self, len, buf);
-        }
+        // read buffer using interrupts
+        size_t len = args.read_buf_len.u_int + 1; // +1 to adjust for usable length of buffer
+        uint8_t *buf = m_new(byte, len << self->char_width);
+        uart_set_rxbuf(self, len, buf);
     }
 
     // compute actual baudrate that was configured

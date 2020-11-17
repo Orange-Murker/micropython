@@ -93,6 +93,7 @@ SRC_C = \
 	esppwm.c \
 	espneopixel.c \
 	espapa102.c \
+	intr.c \
 	modpyb.c \
 	modmachine.c \
 	machine_pin.c \

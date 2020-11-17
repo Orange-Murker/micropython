@@ -4,16 +4,16 @@
 from . import core
 
 
-async def wait_for(aw, timeout, sleep=core.sleep):
+async def wait_for(aw, timeout):
     aw = core._promote_to_task(aw)
     if timeout is None:
         return await aw
 
-    def cancel(aw, timeout, sleep):
-        await sleep(timeout)
+    def cancel(aw, timeout):
+        await core.sleep(timeout)
         aw.cancel()
 
-    cancel_task = core.create_task(cancel(aw, timeout, sleep))
+    cancel_task = core.create_task(cancel(aw, timeout))
     try:
         ret = await aw
     except core.CancelledError:
@@ -27,10 +27,6 @@ async def wait_for(aw, timeout, sleep=core.sleep):
         # Cancel task ran to completion, ie there was a timeout
         raise core.TimeoutError
     return ret
-
-
-def wait_for_ms(aw, timeout):
-    return wait_for(aw, timeout, core.sleep_ms)
 
 
 async def gather(*aws, return_exceptions=False):
