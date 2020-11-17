@@ -34,6 +34,9 @@
 // If we're building the minimal variant, ignore the rest of this file.
 #ifndef MICROPY_UNIX_MINIMAL
 
+// Include the "" directory too to eliminate the difference between REPL and file initiation
+#define MICROPY_PY_SYS_PATH_DEFAULT ":~/.micropython/lib:/usr/lib/micropython"
+
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
 #if !defined(MICROPY_EMIT_X64) && defined(__x86_64__)
@@ -175,6 +178,9 @@
 #define MICROPY_WARNINGS            (1)
 #define MICROPY_ERROR_PRINTER       (&mp_stderr_print)
 #define MICROPY_PY_STR_BYTES_CMP_WARN (1)
+
+// VFS stat functions should return time values relative to 1970/1/1
+#define MICROPY_EPOCH_IS_1970       (1)
 
 extern const struct _mp_print_t mp_stderr_print;
 
