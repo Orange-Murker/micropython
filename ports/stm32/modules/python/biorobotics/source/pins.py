@@ -16,8 +16,18 @@ class PWM:
     """
 
     def __init__(self, pin_name: str, freq: float = 1000):
+        """Constructor
 
-        self.pin = Pin(pin_name)
+        :param pin_name: Name of the pin (either STM or Arduino name),
+            or a Pin object directly
+        :param freq: PWM frequency
+        """
+
+        if isinstance(pin_name, Pin):
+            self.pin = pin_name
+        else:
+            self.pin = Pin(pin_name)
+
         self.freq = freq
 
         stm_name = self.pin.name()
