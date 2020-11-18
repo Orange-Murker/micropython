@@ -9,6 +9,7 @@ from serial.tools import list_ports
 from pyboard import Pyboard, PyboardError
 import glob
 import os
+import argparse
 
 
 class PyboardExtended(Pyboard):
@@ -21,6 +22,15 @@ class PyboardExtended(Pyboard):
         """
         self.exec_("import uos\ntry:\n    uos.mkdir('%s')"
                    "\nexcept OSError:\n    pass" % directory)
+
+    def __enter__(self):
+        """Run at the start of `with ...:`"""
+        self.enter_raw_repl()  # Enter raw REPL by default
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Run at the end of `with ...:`"""
+        self.exit_raw_repl()
+        self.close()  # Close connection
 
 
 def find_ports():
@@ -67,48 +77,64 @@ def select_port(ports, i_hint=0):
 def main():
     """Main function, executed when running file like a script"""
 
-    ports, i_hint = find_ports()
+    parser = argparse.ArgumentParser(
+        description='Upload python program recursively over serial to '
+                    'micropython board'
+    )
+    parser.add_argument('-p', '--port', default=None,
+                        help='Specify the COM port and skip the selection '
+                             'prompt (user is prompted by default)')
+    args = parser.parse_args()
 
-    if not ports:
-        print("No serial devices found")
-        return 1
+    if args.port is None:
 
-    port = select_port(ports, i_hint)
+        ports, i_hint = find_ports()
+
+        if not ports:
+            print("No serial devices found")
+            return 1
+
+        port = select_port(ports, i_hint)
+        device = port.device
+    else:
+        device = args.port
 
     # Connect
-    pyb = PyboardExtended(port.device, 115200)
+    pyb = PyboardExtended(device, 115200)
 
     # Files to be copied
     files = glob.glob("**/*py", recursive=True)
 
-    # Start copy
+    if not files:
+        print("No files found to upload")
+        return 2
+
+    # Connect
     print("Connecting to REPL...")
-    pyb.enter_raw_repl()
+    with pyb:
 
-    for file in files:
-        print("Moving ", file)
+        # Copy files
+        for file in files:
+            print("Moving ", file)
 
-        directory = os.path.dirname(file)
-        if directory:
-            pyb.fs_mkdir_s(directory)
+            directory = os.path.dirname(file)
+            if directory:
+                pyb.fs_mkdir_s(directory)
 
-        attempts = 0
-        done = False
+            attempts = 0
+            done = False
 
-        while not done and attempts < 10:  # Include attempts limit for safety
-            try:
-                pyb.fs_put(file, file)
-                done = True  # Successful
-            except PyboardError as err:
-                attempts += 1  # Another failure
-                if attempts >= 5:
-                    raise PyboardError(
-                        "Failed to upload `{}` in {} attempts".format(
-                            file, attempts)) from err
-                # Throw error again if it keeps failing
-
-    pyb.exit_raw_repl()
-    pyb.close()
+            while not done and attempts < 10:  # Include limit for safety
+                try:
+                    pyb.fs_put(file, file)
+                    done = True  # Successful
+                except PyboardError as err:
+                    attempts += 1  # Another failure
+                    if attempts >= 5:
+                        raise PyboardError(
+                            "Failed to upload `{}` in {} attempts".format(
+                                file, attempts)) from err
+                    # Throw error again if it keeps failing
 
     print("Done")
 
