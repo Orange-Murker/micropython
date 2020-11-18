@@ -92,6 +92,11 @@ class Ticker:
         self.timer.callback(
             lambda _: micropython.schedule(self.fun_wrap_ref, 0)
         )
+        # We use the scheduler function instead of calling the function
+        # directly because it prevents ticker overloading and improves
+        # memory management. schedule() will run the target "very soon". See
+        # the micropython docs entry for more information.
+
         self.is_started = True
 
     def stop(self):
