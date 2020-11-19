@@ -86,7 +86,8 @@ class Encoder:
     def set_counter(self, new_counter: int):
         """Reset the counter to a specified value"""
 
-        pulses = new_counter % self._period  # Always positive
+        pulses = new_counter % (self._period + 1)  # Always positive
         self.timer.counter(pulses)  # Reset timer counter
+        self._last_counter = pulses  # Reset history to prevent unwrapping
 
-        self._loop_count = floor(new_counter / self._period)  # Set loops
+        self._loop_count = floor(new_counter / (self._period + 1))  # Set loops
