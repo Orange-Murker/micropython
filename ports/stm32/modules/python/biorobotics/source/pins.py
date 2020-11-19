@@ -8,6 +8,22 @@ from pyb import Pin, Timer
 from .timer_channels import PINS_TO_TIMERS
 
 
+def make_pin(pin: str) -> Pin:
+    """Parse input into a Pin object
+
+    :param pin: Input object
+    """
+
+    if isinstance(pin, Pin):
+        return pin
+
+    if isinstance(pin, str):
+        return Pin(pin)
+
+    raise ValueError('Cannot convert `{}` of type `{}` into a Pin '
+                     'object'.format(pin, type(pin)))
+
+
 class PWM:
     """Pulse-Width Modulation interface
 
@@ -15,18 +31,15 @@ class PWM:
     and channels based on the target pin.
     """
 
-    def __init__(self, pin_name: str, freq: float = 1000):
+    def __init__(self, pin: str, freq: float = 1000):
         """Constructor
 
-        :param pin_name: Name of the pin (either STM or Arduino name),
+        :param pin: Name of the pin (either STM or Arduino name),
             or a Pin object directly
         :param freq: PWM frequency
         """
 
-        if isinstance(pin_name, Pin):
-            self.pin = pin_name
-        else:
-            self.pin = Pin(pin_name)
+        self.pin = make_pin(pin)
 
         self.freq = freq
 
@@ -34,8 +47,9 @@ class PWM:
         if stm_name in PINS_TO_TIMERS:
             self.timer_number, self.channel_number = PINS_TO_TIMERS[stm_name]
         else:
-            raise ValueError('The pin `{}` does not have a registered PWM '
-                             'timer channel connected to it'.format(pin_name))
+            raise ValueError('The pin `P{}` does not have a registered PWM '
+                             'timer channel connected to '
+                             'it'.format(pin.name()))
 
         # Select the timer to be used and set PWM frequency
         self.timer = Timer(self.timer_number, freq=self.freq)
