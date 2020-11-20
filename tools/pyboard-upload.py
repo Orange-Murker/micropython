@@ -117,7 +117,9 @@ def main():
         for file in files:
             print("Moving ", file)
 
-            directory = os.path.dirname(file)
+            target = file.replace('\\', '/')  # Replace Windows separator
+
+            directory = os.path.dirname(target)
             if directory:
                 pyb.fs_mkdir_s(directory)
 
@@ -126,14 +128,14 @@ def main():
 
             while not done:
                 try:
-                    pyb.fs_put(file, file)
+                    pyb.fs_put(file, target)
                     done = True  # Successful
                 except PyboardError as err:
                     attempts += 1  # Another failure
                     if attempts >= 5:
                         raise PyboardError(
                             "Failed to upload `{}` in {} attempts".format(
-                                file, attempts)) from err
+                                tartet, attempts)) from err
                     # Throw error again if it keeps failing
 
     print("Done")
