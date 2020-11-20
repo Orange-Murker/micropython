@@ -124,7 +124,7 @@ def main():
             attempts = 0
             done = False
 
-            while not done and attempts < 10:  # Include limit for safety
+            while not done:
                 try:
                     pyb.fs_put(file, file)
                     done = True  # Successful
