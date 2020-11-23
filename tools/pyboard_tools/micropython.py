@@ -12,11 +12,13 @@ def uos_mkdir_safe(directory):
     is caught.
     """
     import uos
+    import errno
 
     try:
         uos.mkdir(directory)
-    except OSError:
-        pass
+    except OSError as err:
+        if err.args[0] != errno.EEXIST:
+            raise err  # Ignore any other errors
 
 
 def uos_remove_all_files():
