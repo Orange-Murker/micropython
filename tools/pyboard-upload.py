@@ -1,15 +1,41 @@
 #!/bin/python3
 
-#
-# This basic script uploads all .py files and files in sub-folders to
-# the board through the serial REPL.
-#
+"""
+This basic script uploads all .py files and files in sub-folders to the
+board through the serial REPL.
+
+It should be called from your project directory like:
+
+    >> python 'C:\Program Files\micropython\pyboard-upload.py'
+
+"""
 
 from serial.tools import list_ports
-from pyboard import Pyboard, PyboardError
+from pyboard import Pyboard, PyboardError, stdout_write_bytes
 import glob
 import os
+import inspect
 import argparse
+
+
+def uos_remove_all_files():
+    """Recursively remove all files and directories"""
+    import uos
+
+    def rmdir_recursive(directory):
+        for name, is_folder, inode, size in uos.ilistdir(directory):
+
+            path = directory + '/' + name
+
+            if is_folder == 0x4000:
+                rmdir_recursive(path)
+                uos.rmdir(path)
+            else:
+                if name in ['pybcdc.inf', 'README.txt']:
+                    continue  # Keep
+                uos.remove(path)
+
+    rmdir_recursive('.')
 
 
 class PyboardExtended(Pyboard):
@@ -22,6 +48,61 @@ class PyboardExtended(Pyboard):
         """
         self.exec_("import uos\ntry:\n    uos.mkdir('%s')"
                    "\nexcept OSError:\n    pass" % directory)
+
+    def fs_remove_all(self):
+        """Remove all files on the file system
+
+        Except the standard 'README.txt' and 'pybcdc.inf'
+        """
+
+        # `commands` will include the function name, we need to call it too
+        commands = inspect.getsource(uos_remove_all_files)
+
+        self.exec_(commands)
+        self.exec_("uos_remove_all_files()", stdout_write_bytes)
+
+    def fs_put_files(self, files):
+        """Upload a list of files
+
+        Directories will be created for files if needed (unlike the basic
+        `fs_put`).
+        The files list should point relatively to paths as they exist on the
+        PC filesystem. Those files will be created on the pyboard with the
+        same structure.
+
+        :param files: List of relative file paths
+        """
+
+        # Copy files
+        for file in files:
+
+            file_name = os.path.basename(file)
+            if file_name in ['pyboard.py', 'pyboard-upload.py']:
+                continue  # Prevent uploading of itself (only relevant if
+                # the script was not used correctly in the first place)
+
+            print("Moving ", file)
+
+            target = file.replace('\\', '/')  # Replace Windows separator
+
+            directory = os.path.dirname(target)
+            if directory:
+                self.fs_mkdir_s(directory)
+
+            attempts = 0
+            done = False
+
+            while not done:
+                try:
+                    self.fs_put(file, target)
+                    done = True  # Successful
+                except PyboardError as err:
+                    attempts += 1  # Another failure
+                    if attempts >= 5:
+                        raise PyboardError(
+                            "Failed to upload `{}` in {} attempts".format(
+                                target, attempts)) from err
+                    # Throw error again if it keeps failing
 
     def __enter__(self):
         """Run at the start of `with ...:`"""
@@ -74,8 +155,8 @@ def select_port(ports, i_hint=0):
     return ports[selected_port]
 
 
-def main():
-    """Main function, executed when running file like a script"""
+def command_line_interface():
+    """Use the parser modules to define a CLI"""
 
     parser = argparse.ArgumentParser(
         description='Upload python program recursively over serial to '
@@ -84,7 +165,16 @@ def main():
     parser.add_argument('-p', '--port', default=None,
                         help='Specify the COM port and skip the selection '
                              'prompt (user is prompted by default)')
-    args = parser.parse_args()
+    parser.add_argument('-c', '--clear_fs', default=True, type=bool,
+                        help='Set to False to skip clearing the file system '
+                             'first (True by default)')
+    return parser.parse_args()
+
+
+def main():
+    """Main function, executed when running file like a script"""
+
+    args = command_line_interface()  # Get sys args
 
     if args.port is None:
 
@@ -113,30 +203,11 @@ def main():
     print("Connecting to REPL...")
     with pyb:
 
-        # Copy files
-        for file in files:
-            print("Moving ", file)
+        if args.clear_fs:
+            print('Clearing filesystem...')
+            pyb.fs_remove_all()
 
-            target = file.replace('\\', '/')  # Replace Windows separator
-
-            directory = os.path.dirname(target)
-            if directory:
-                pyb.fs_mkdir_s(directory)
-
-            attempts = 0
-            done = False
-
-            while not done:
-                try:
-                    pyb.fs_put(file, target)
-                    done = True  # Successful
-                except PyboardError as err:
-                    attempts += 1  # Another failure
-                    if attempts >= 5:
-                        raise PyboardError(
-                            "Failed to upload `{}` in {} attempts".format(
-                                tartet, attempts)) from err
-                    # Throw error again if it keeps failing
+        pyb.fs_put_files(files)
 
     print("Done")
 
