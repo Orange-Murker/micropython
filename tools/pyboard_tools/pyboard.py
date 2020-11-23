@@ -7,6 +7,7 @@ pyboard class. When this has happened, this extension will be redundant.
 
 import os
 import inspect
+import re
 
 from .system import get_file_checksum, split_path_components
 from .micropython import uos_file_checksums, uos_remove_all_files, \
@@ -22,6 +23,14 @@ def bytes_to_string(bytes_list):
 
 class PyboardExtended(Pyboard):
     """Extends the original Pyboard class"""
+
+    def __init__(self, *args, **kwargs):
+        """Constructor, see parent"""
+        super().__init__(*args, **kwargs)
+
+        # Pre-compile regex to find invalid file paths
+        self.file_re = re.compile(r'[^a-zA-Z0-9\_\./]')
+        # Block strings that *not* like a-z, etc.
 
     def execute_function(self, func, *args, data_consumer=None):
         """Execute a function on the pyboard
@@ -99,11 +108,18 @@ class PyboardExtended(Pyboard):
             any errors and re-try a failed upload for this number of times
         """
         file_name = os.path.basename(file)
-        if file_name in ['pyboard.py', 'pyboard_upload.py']:
+        if file_name in ['pyboard.py', 'pyboard_upload.py'] or \
+                'pyboard_tools' in file:
+            print('Skipping pyboard files')
             return  # Prevent uploading of itself (only relevant if
             # the script was not used correctly in the first place)
 
         target = file.replace('\\', '/')  # Replace Windows separator
+
+        if self.file_re.search(target):
+            print('Not uploading `{}` because it contains characters that '
+                  'are not allowed'.format(file))
+            return
 
         directory = os.path.dirname(target)
         if directory:
