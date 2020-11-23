@@ -59,6 +59,11 @@ def select_port(ports, i_hint=0):
     return ports[selected_port]
 
 
+METHOD_SYNC = 'sync'
+METHOD_PLAIN = 'plain'
+METHOD_CLEAR = 'clear'
+
+
 def command_line_interface():
     """Use the parser modules to define a CLI"""
 
@@ -69,9 +74,18 @@ def command_line_interface():
     parser.add_argument('-p', '--port', default=None,
                         help='Specify the COM port and skip the selection '
                              'prompt (user is prompted by default)')
+    parser.add_argument('-m', '--method', default='sync',
+                        help='The method used for uploading (default: sync), '
+                             '`sync`: rsync-like operation where only '
+                             'different files are transferred, `plain`: all '
+                             'files are always uploaded, `clear`: only '
+                             'clear the file system, without uploading '
+                             'anything',
+                        choices=[METHOD_SYNC, METHOD_PLAIN, METHOD_CLEAR])
     parser.add_argument('-c', '--clear_fs', default=True, type=bool,
                         help='Set to False to skip clearing the file system '
-                             'first (True by default)')
+                             'first (True by default) (only relevant for '
+                             'plain method')
     return parser.parse_args()
 
 
@@ -107,8 +121,19 @@ def main():
     print("Connecting to REPL...")
     with pyb:
 
-        print('Performing sync...')
-        pyb.fs_rsync(files)
+        if args.method == METHOD_SYNC:
+            print("Performing sync...")
+            pyb.fs_rsync(files)
+
+        elif args.method == METHOD_PLAIN:
+            if args.clear_fs:
+                print("Clearing filesystem...")
+                pyb.fs_remove_all()
+            pyb.fs_put_files(files)
+
+        elif args.method == METHOD_CLEAR:
+            print("Clearing filesystem...")
+            pyb.fs_remove_all()
 
     print("Done")
 

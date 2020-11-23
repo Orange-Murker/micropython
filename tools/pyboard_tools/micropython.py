@@ -5,6 +5,20 @@ inspection.
 """
 
 
+def uos_mkdir_safe(directory):
+    """Safely create a directory
+
+    Based on uos.mkdir(), only the error about the folder already existing
+    is caught.
+    """
+    import uos
+
+    try:
+        uos.mkdir(directory)
+    except OSError:
+        pass
+
+
 def uos_remove_all_files():
     """Recursively remove all files and directories"""
     import uos
