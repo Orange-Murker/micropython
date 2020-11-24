@@ -10,6 +10,7 @@ https://os.mbed.com/platforms/ST-Nucleo-H743ZI2/#board-pinout
 # STM pin names (the blue labels) are used, *not* Arduino pin names, because
 # those are the result of pin.name()
 # Channels that are marked 'inverted' are disabled
+# The used timers are: 1, 2, 3, 4, 13, 14, 15, 16, 17
 PINS_TO_TIMERS = {
     'A3': (2, 4),
     # 'B1': (1, 3),  # Inverted
@@ -98,3 +99,9 @@ PINS_TO_TIMERS = {
     # 'E9': (1, 1),  # Duplicate pin
     # 'E11': (1, 2)  # Duplicate pin
 }
+
+# List of hardware timers that are not connected to a pin and can be safely
+# used for tickers
+TICKER_TIMERS = [
+    5, 6, 7, 8, 9, 10, 11, 12
+]

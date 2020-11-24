@@ -7,6 +7,8 @@ import micropython
 from pyb import Timer
 import gc
 
+from .timer_channels import TICKER_TIMERS
+
 # Time measurement function similar to Matlab's tic/toc
 # tic();toc() itself takes 6us, excluding the print statements
 t0 = 0
@@ -45,7 +47,7 @@ class Ticker:
     """
 
     def __init__(self, timer: int, freq: float, fun: callable,
-                 enable_gc: bool = False):
+                 enable_gc: bool = False, use_hardware_id: bool = False):
         """Construct Ticker
 
         :param timer: Number of the on-board hardware timer to use
@@ -55,8 +57,19 @@ class Ticker:
             collection and instead run GC at the end of the user callback -
             This is most recommended when the function is the `loop()` of the
             program
+        :param use_hardware_id: When set to True, the `timer` id is used as
+            the id of an on-board timer. When set to False (default),
+            the id is used to count over general purpose timers. The latter
+            is useful to avoid conflicts with attached pins
         """
-        self.timer_number = timer
+        if use_hardware_id:
+            self.timer_number = timer
+        else:
+            if timer >= len(TICKER_TIMERS):
+                raise ValueError('Timer {} exceeds the {} available ticker '
+                                 'timers'.format(timer, len(TICKER_TIMERS)))
+            self.timer_number = TICKER_TIMERS[timer]
+
         self.freq = freq
         self.fun = fun
         self.enable_gc = enable_gc
