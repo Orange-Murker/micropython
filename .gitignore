@@ -29,8 +29,7 @@ build-*/
 
 # Test failure outputs
 ######################
-tests/*.exp
-tests/*.out
+tests/results/*
 
 # Python cache files
 ######################
@@ -43,6 +42,7 @@ GNUmakefile
 user.props
 .directory
 .idea/
+.vscode/
 
 # Generated rst files
 ######################

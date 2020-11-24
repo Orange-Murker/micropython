@@ -13,6 +13,9 @@ QSTR_DEFS = ../unix/qstrdefsport.h
 # include py core make definitions
 include $(TOP)/py/py.mk
 
+# List the required submodules
+GIT_SUBMODULES = ports/windows/modules/python
+
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
