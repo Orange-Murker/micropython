@@ -39,3 +39,6 @@
 [submodule "ports/windows/modules/python"]
 	path = ports/windows/modules/python
 	url = git@bitbucket.org:ctw-bw/micropython-dummy-modules.git
+[submodule "ports/stm32/modules/python/biorobotics"]
+	path = ports/stm32/modules/python/biorobotics
+	url = git@bitbucket.org:ctw-bw/micropython-biorobotics-package.git
