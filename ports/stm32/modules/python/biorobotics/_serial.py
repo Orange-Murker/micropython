@@ -56,6 +56,15 @@ class SerialPC:
         """Set data in channel, prepared to be sent"""
         self._data[channel] = float(value)  # Force parse to float
 
+    def set_list(self, array):
+        """Set all channels with an array"""
+        if len(array) != self._channels:
+            raise ValueError('{} channels were specified, but the given '
+                             'array has {} elements'.format(self._channels,
+                                                            len(array)))
+        for i, value in enumerate(array):
+            self._data[i] = float(value)  # Force cast to float
+
     def send(self):
         """Send packet"""
 

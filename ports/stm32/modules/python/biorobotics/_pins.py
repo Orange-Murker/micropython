@@ -50,9 +50,9 @@ class PWM:
         if stm_name in PINS_TO_TIMERS:
             self.timer_number, self.channel_number = PINS_TO_TIMERS[stm_name]
         else:
-            raise ValueError('The pin `P{}` does not have a registered PWM '
+            raise ValueError('The pin `{}` does not have a registered PWM '
                              'timer channel connected to '
-                             'it'.format(pin.name()))
+                             'it'.format(pin))
 
         # Select the timer to be used and set PWM frequency
         self.timer = Timer(self.timer_number, freq=self.freq)

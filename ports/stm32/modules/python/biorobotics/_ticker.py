@@ -20,12 +20,12 @@ def tic() -> None:
     t0 = ticks_us()
 
 
-def toc() -> float:
+def toc() -> int:
     """End time measurement, print and return results"""
     global t0
     t1 = ticks_us()
     time_taken = t1 - t0
-    print('Time elapsed: %.3f us' % time_taken)
+    print('Time elapsed: %d us' % time_taken)
     return time_taken
 
 
@@ -46,13 +46,13 @@ class Ticker:
      Note: the ticker is not started on initialization!
     """
 
-    def __init__(self, timer: int, freq: float, fun: callable,
+    def __init__(self, timer: int, freq: float, callback: callable,
                  enable_gc: bool = False, use_hardware_id: bool = False):
         """Construct Ticker
 
         :param timer: Number of the on-board hardware timer to use
         :param freq: Frequency (in Hz) of the callback
-        :param fun: Callback to be attached to the timer
+        :param callback: Callback to be attached to the timer
         :param enable_gc: Set to True to disable general automatic garbage
             collection and instead run GC at the end of the user callback -
             This is most recommended when the function is the `loop()` of the
@@ -71,7 +71,7 @@ class Ticker:
             self.timer_number = TICKER_TIMERS[timer]
 
         self.freq = freq
-        self.fun = fun
+        self.fun = callback
         self.enable_gc = enable_gc
 
         if self.enable_gc:
@@ -82,11 +82,11 @@ class Ticker:
 
         # Create a reference to the callback wrapper
         # This is necessary to force correct allocation, see ISR documentation
-        self.fun_wrap_ref = self.fun_wrap
+        self._fun_wrap_ref = self._fun_wrap
 
         self.is_started = False
 
-    def fun_wrap(self, _):
+    def _fun_wrap(self, _):
         """Wrapper around the user callback
 
         The schedule function passes a single argument, so we have to
@@ -103,7 +103,7 @@ class Ticker:
         # Attach callback function wrapper
         # callback() passes a single argument, which is not used now
         self.timer.callback(
-            lambda _: micropython.schedule(self.fun_wrap_ref, 0)
+            lambda _=None: micropython.schedule(self._fun_wrap_ref, 0)
         )
         # We use the scheduler function instead of calling the function
         # directly because it prevents ticker overloading and improves
