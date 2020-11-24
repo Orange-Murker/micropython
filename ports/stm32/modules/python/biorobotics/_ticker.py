@@ -7,7 +7,7 @@ import micropython
 from pyb import Timer
 import gc
 
-from .timer_channels import TICKER_TIMERS
+from ._timer_channels import TICKER_TIMERS
 
 # Time measurement function similar to Matlab's tic/toc
 # tic();toc() itself takes 6us, excluding the print statements

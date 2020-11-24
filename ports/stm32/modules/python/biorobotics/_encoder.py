@@ -5,8 +5,8 @@ Encoder class
 from pyb import Timer
 from math import floor
 
-from .timer_channels import PINS_TO_TIMERS
-from .pins import make_pin
+from ._timer_channels import PINS_TO_TIMERS
+from ._pins import make_pin
 
 
 class Encoder:

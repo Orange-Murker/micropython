@@ -6,7 +6,7 @@ and pins
 from pyb import Pin, Timer
 from machine import ADC
 
-from .timer_channels import PINS_TO_TIMERS
+from ._timer_channels import PINS_TO_TIMERS
 
 
 def make_pin(pin: str) -> Pin:
