@@ -4,6 +4,7 @@ and pins
 """
 
 from pyb import Pin, Timer
+from machine import ADC
 
 from .timer_channels import PINS_TO_TIMERS
 
@@ -33,6 +34,8 @@ class PWM:
 
     def __init__(self, pin: str, freq: float = 1000):
         """Constructor
+
+        An error is thrown if the pin is not connected to a timer channel.
 
         :param pin: Name of the pin (either STM or Arduino name),
             or a Pin object directly
@@ -69,3 +72,34 @@ class PWM:
         elif percentage > 100.0:
             percentage = 100.0
         self.channel.pulse_width_percent(percentage)
+
+
+class AnalogIn:
+    """Read analog signal
+
+    Extension of ADC
+    """
+
+    def __init__(self, pin: str):
+        """Constructor
+
+        An error will be throws if the pin does not have an
+        Analog-to-Digital converted connected.
+
+        :param pin: Name of a pin or Pin object
+        """
+
+        self.pin = make_pin(pin)
+        self.adc = ADC(self.pin)
+
+    def read(self) -> float:
+        """Get analog input value between 0.0 and 1.0
+
+        Corresponding to 0 to 3.3V. The Nucleo appears to be 5V tolerant.
+        The resolution is 16 bit.
+        """
+        return float(self.adc.read_u16()) / 65535.0
+
+    def read_u16(self) -> int:
+        """Get analog input as integer, from 0 to 65535"""
+        return self.adc.read_u16()
