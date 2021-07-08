@@ -13,7 +13,7 @@
 #
 # E.g. "&build-stm" indicates a new YAML anchor. "*build-stm" calls this anchor.
 #
-image: gcc:10.2
+image: gcc:10.3
 
 definitions:
   steps:
@@ -23,7 +23,10 @@ definitions:
           - stmbuild
           - mpybuild
         script:
-          - apt update -qq && apt install gcc-arm-none-eabi -y
+          # There gcc-arm version 10 is no longer on ppa... Do manual install instead
+          # - apt update -qq && apt install gcc-arm-none-eabi -y
+          - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-x86_64-linux.tar.bz2 && tar xjf gcc-arm-none-eabi-*.bz2 -C /usr/share/
+          - ln -s /usr/share/gcc-arm-none-eabi-*/bin/arm-none-eabi-* /usr/bin/
           - cd mpy-cross
           - make
           - cd ../ports/stm32
