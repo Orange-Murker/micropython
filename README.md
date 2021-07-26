@@ -1,14 +1,19 @@
 MicroPython - BioRobotics
 =========================
+[![CI badge](https://github.com/micropython/micropython/workflows/unix%20port/badge.svg)](https://github.com/micropython/micropython/actions?query=branch%3Amaster+event%3Apush) [![Coverage badge](https://coveralls.io/repos/micropython/micropython/badge.png?branch=master)](https://coveralls.io/r/micropython/micropython?branch=master)
 
 ![MicroPython Logo](https://raw.githubusercontent.com/micropython/micropython/master/logo/upython-with-micro.jpg)
+
+----
+
+**This is a fork of the original, focussed for the BioRobotics educational
+module. This has been made by the Biomechanical Engineering group.**
+
+----
 
 This is the MicroPython project, which aims to put an implementation
 of Python 3.x on microcontrollers and small embedded systems.
 You can find the official website at [micropython.org](http://www.micropython.org).
-
-**This is a fork of the original, focussed for the BioRobotics educational
-module. This has been made by the Biomechanical Engineering group.**
 
 WARNING: this project is in beta stage and is subject to changes of the
 code-base, including project-wide name changes and API changes.
