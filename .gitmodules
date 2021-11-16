@@ -48,3 +48,6 @@
 [submodule "ports/stm32/modules/python/biorobotics"]
 	path = ports/stm32/modules/python/biorobotics
 	url = https://bitbucket.org/ctw-bw/micropython-biorobotics-package.git
+[submodule "extmod/ulab"]
+	path = extmod/ulab
+	url = https://github.com/v923z/micropython-ulab.git
