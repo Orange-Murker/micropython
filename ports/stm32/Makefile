@@ -3,8 +3,7 @@
 BOARD ?= NUCLEO_H743ZI
 # Add biorobotics C modules in /modules/C/ 
 # And enable the extra flags their respective makefiles
-# USER_C_MODULES=../../extmod/ulab;modules/C
-# USER_C_MODULES=../../extmod/ulab all
+USER_C_MODULES=modules/C
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
@@ -38,7 +37,7 @@ MBOOT_TEXT0_ADDR ?= 0x08000000
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-GIT_SUBMODULES = lib/libhydrogen lib/lwip lib/mbedtls lib/mynewt-nimble lib/stm32lib ports/stm32/modules/python/biorobotics extmod/ulab
+GIT_SUBMODULES = lib/libhydrogen lib/lwip lib/mbedtls lib/mynewt-nimble lib/stm32lib ports/stm32/modules/python/biorobotics ports/stm32/modules/C/ulab/micropython-ulab
 
 MCU_SERIES_UPPER = $(shell echo $(MCU_SERIES) | tr '[:lower:]' '[:upper:]')
 CMSIS_MCU_LOWER = $(shell echo $(CMSIS_MCU) | tr '[:upper:]' '[:lower:]')
