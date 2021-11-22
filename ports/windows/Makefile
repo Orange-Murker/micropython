@@ -5,7 +5,7 @@ include ../../py/mkenv.mk
 FROZEN_MANIFEST ?= manifest.py
 
 # define main target
-PROG = micropython.exe
+PROG = micropython
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = ../unix/qstrdefsport.h
@@ -34,8 +34,8 @@ endif
 
 # source files
 SRC_C = \
-	lib/utils/gchelper_generic.c \
-	lib/utils/printf.c \
+	shared/libc/printf.c \
+	shared/runtime/gchelper_generic.c \
 	ports/unix/main.c \
 	ports/unix/input.c \
 	ports/unix/modos.c \
@@ -53,7 +53,7 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
 ifeq ($(MICROPY_USE_READLINE),1)
 CFLAGS_MOD += -DMICROPY_USE_READLINE=1
-SRC_C += lib/mp-readline/readline.c
+SRC_C += shared/readline/readline.c
 endif
 
 # Additional settings for frozen modules

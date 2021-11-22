@@ -1,7 +1,6 @@
 [submodule "lib/axtls"]
 	path = lib/axtls
-	url = https://github.com/pfalcon/axtls
-	branch = micropython
+	url = https://github.com/micropython/axtls.git
 [submodule "lib/libffi"]
 	path = lib/libffi
 	url = https://github.com/atgreen/libffi
@@ -48,3 +47,6 @@
 [submodule "ports/stm32/modules/python/biorobotics"]
 	path = ports/stm32/modules/python/biorobotics
 	url = https://bitbucket.org/ctw-bw/micropython-biorobotics-package.git
+[submodule "ports/stm32/modules/C/ulab/micropython-ulab"]
+	path = ports/stm32/modules/C/ulab/micropython-ulab
+	url = https://github.com/v923z/micropython-ulab.git
