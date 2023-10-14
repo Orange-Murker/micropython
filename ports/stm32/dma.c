@@ -33,6 +33,7 @@
 #include "systick.h"
 #include "dma.h"
 #include "irq.h"
+#include "luna_dma.h"
 
 #define DMA_IDLE_ENABLED()  (dma_idle.enabled != 0)
 #define DMA_SYSTICK_LOG2    (3)
@@ -632,9 +633,14 @@ void DMA1_Stream0_IRQHandler(void) {
 }
 void DMA1_Stream1_IRQHandler(void) {
     IRQ_ENTER(DMA1_Stream1_IRQn);
-    if (dma_handle[dma_id_1] != NULL) {
-        HAL_DMA_IRQHandler(dma_handle[dma_id_1]);
-    }
+
+//    if (dma_handle[dma_id_1] != NULL) {
+//        HAL_DMA_IRQHandler(dma_handle[dma_id_1]);
+//    }
+
+    // As far as I know DMA1 Stream 1 is not used for anything
+    Handle_DMA_IT();
+
     IRQ_EXIT(DMA1_Stream1_IRQn);
 }
 void DMA1_Stream2_IRQHandler(void) {

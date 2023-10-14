@@ -403,7 +403,8 @@ struct _mp_bluetooth_btstack_root_pointers_t;
     MICROPY_PORT_ROOT_POINTER_BLUETOOTH_BTSTACK \
     \
     /* root pointers defined by a board */ \
-        MICROPY_BOARD_ROOT_POINTERS \
+    MICROPY_BOARD_ROOT_POINTERS    \
+    mp_obj_t luna_dma_callback; \
 
 // type definitions for the specific machine
 
