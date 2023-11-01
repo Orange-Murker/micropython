@@ -405,7 +405,7 @@ struct _mp_bluetooth_btstack_root_pointers_t;
     /* root pointers defined by a board */ \
     MICROPY_BOARD_ROOT_POINTERS    \
     mp_obj_t luna_dma_callback; \
-
+    mp_int_t luna_dma_transfer_size; \
 // type definitions for the specific machine
 
 #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((uint32_t)(p) | 1))
